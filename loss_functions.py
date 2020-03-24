@@ -35,7 +35,7 @@ def relative_loss(y, y_):
     """
     energy, energy_ = y[::,0::3], y_[::,0::3]
     theta, theta_ = y[::,1::3], y_[::,1::3]
-    phi, phi_ = y[::,2::3], y[::,2::3]
+    phi, phi_ = y[::,2::3], y_[::,2::3]
     
     loss_energy = LAMBDA_ENERGY*K.square(tf.divide(energy-energy_, energy_+OFFSET_ENERGY))
     loss_theta = LAMBDA_THETA*K.square(theta-theta_)
@@ -56,7 +56,7 @@ def absolute_loss(y, y_):
     """
     energy, energy_ = y[::,0::3], y_[::,0::3]
     theta, theta_ = y[::,1::3], y_[::,1::3]
-    phi, phi_ = y[::,2::3], y[::,2::3]
+    phi, phi_ = y[::,2::3], y_[::,2::3]
     
     loss_energy = LAMBDA_ENERGY*K.square(energy-energy_)
     loss_theta = LAMBDA_THETA*K.square(theta-theta_)
