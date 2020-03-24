@@ -82,7 +82,7 @@ def vector_loss(y, y_):
      r_ = [x_,y_,z_]
      
      loss_energy = LAMBDA_ENERGY*K.square(energy-energy_)
-     loss_angles = LAMBDA_VECTOR*(np.ones(r.size)-K.dot(r,r_))
+     loss_angles = LAMBDA_VECTOR*(np.ones(r.shape)-K.dot(r,r_))
      
      return K.mean(loss_energy + loss_angles)
 
