@@ -17,11 +17,43 @@ LAMBDA_THETA = 1
 LAMBDA_PHI = 1
 LAMBDA_VECTOR = 1
 
-"""
-    OBS. why calculate the loss for all permutations? Why not train the network to
-    predict the events ordered in decreasing energy??????? 
+def permutation_loss_wrapper(max_mult):
+    """
+    Wrapper function for permutation_loss
     
-"""
+    """
+    if max_mult >= 7:
+        print('WARNING: max multiplicity: ' + max_mult + ' is freaking huge!!')
+    permutation_tensor = get_permutation_tensor(max_mult)
+    identity_tensor = get_identity_tensor(max_mult)
+    def loss(y, y_):
+        return permutation_loss(y, y_, permutation_tensor, identity_tensor)
+
+
+def permutation_loss(y, y_, permutation_tensor, identity_tensor):
+    """
+    A loss function that enables training without orderes labels (in fact, it 
+    requires no such clear order, e.g. decreasing energy).
+    
+         Args:
+        y : predicted data from network
+        y_ : corresponding labels (IMPORTANT: not ordered!)
+     Returns:
+        loss
+    """
+    
+    y_ = tf.transpose(K.dot(y_, permutation_tensor), perm=[1,0,2])
+    y = tf.transpose(K.dot(y, identity_tensor), perm=[1,0,2])
+    
+    energy, energy_ = y[::,::,0::3], y_[::,::,0::3]
+    theta, theta_ = y[::,::,1::3], y_[::,::,1::3]                 #zenith (0,pi)
+    phi, phi_ = y[::,::,2::3], y_[::,::,2::3]                      #azimuth (0,2pi)
+
+    loss_energy = LAMBDA_ENERGY*K.mean(K.square(energy-energy_))
+    loss_theta = LAMBDA_THETA*K.mean(K.square(theta-theta_))
+    loss_phi = LAMBDA_PHI*K.mean(K.square(phi-phi_))
+    
+    return K.min(loss_energy+loss_theta+loss_phi)
 
 def relative_loss(y, y_):
     """
