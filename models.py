@@ -25,3 +25,4 @@ def FCN(no_inputs, no_outputs, no_layers, no_nodes):
     outputs = Dense(no_outputs, activation='relu')(x)
     return Model(inputs, outputs)
     
+
