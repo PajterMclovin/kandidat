@@ -42,8 +42,9 @@ def main():
     model = FCN(no_inputs, no_outputs, 10, 128)
     
     #compile the model, choose loss function
-    model.compile(optimizer=Adam(), loss=relative_loss, metrics=['accuracy'])
-    
+    loss_function = permutation_loss_wrapper(int(no_outputs/3))
+    opt = Adam(lr=LEARNING_RATE)
+    model.compile(optimizer=opt, loss=loss_function, metrics=['accuracy'])
     
     #for analyzing the learning curve etc.
     print('tensorboard saved as: ' + NAME)
