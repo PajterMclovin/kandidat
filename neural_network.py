@@ -11,7 +11,7 @@ from time import time
 import matplotlib.pyplot
 
 from models import FCN
-from loss_functions import relative_loss
+import loss_functions as lf
 from utils import load_data, plot_predictions
 
 ## ----------------------------- PARAMETERS -----------------------------------
@@ -56,6 +56,8 @@ def main():
     predictions = model.predict(eval_data)
     figure, axes, rec_events = plot_predictions(predictions, eval_labels)
     figure.show()
+    
+    return model, predictions, training
 
 if __name__ == '__main__':
-    main()
+    model, predictions, training = main()
