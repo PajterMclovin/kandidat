@@ -7,29 +7,30 @@
 
 from tensorflow.keras.optimizers import Adam
 from time import time
-import matplotlib.pyplot
+import h5py
 
-from models import FCN
-import loss_functions as lf
-from utils import load_data, plot_predictions
+from models import FCN, FCN_test
+from loss_functions import relative_loss, permutation_loss_wrapper
+from utils import load_data, get_eval_data, plot_predictions
 
 ## ----------------------------- PARAMETERS -----------------------------------
 NAME = 'test_model-{}'.format(int(time()))
 
 NPZ_DATAFILE = 'test.npz'                       #or import sys and use sys.argv[1]
-TOTAL_PORTION = 1.0                             #portion of total data to be used, [0,1]
-TRAIN_PORTION = 0.8                             #portion of used data for training, [0,1]
+TOTAL_PORTION = 1.0                             #portion of file data to be used, (0,1]
+EVAL_PORTION = 0.1                              #portion of total data for final evalutation (0,1)
 
-NO_EPOCHS = 20                                   #Number of times to go through training data
+NO_EPOCHS = 1                                   #Number of times to go through training data
 BATCH_SIZE = 300                                #The training batch size
-
+LEARNING_RATE = 1e-4                            #Learning rate/step size
+VALIDATION_SPLIT = 0.1                          #??
 
 def main():
     #load simulation data. OBS. labels need to be ordered in decreasing energy!
-    train_data, train_labels, eval_data, eval_labels = load_data(NPZ_DATAFILE, 
-                                                                 TOTAL_PORTION,
-                                                                 TRAIN_PORTION)
+    data, labels = load_data(NPZ_DATAFILE, TOTAL_PORTION)
     
+    #detach subset for final evaluation. Other is used for training and validation
+    train_data, train_labels, eval_data, eval_labels = get_eval_data(data, labels, EVAL_PORTION)
     
     
     ### ------------- BUILD, TRAIN & TEST THE NEURAL NETWORK ------------------
@@ -41,12 +42,14 @@ def main():
     model = FCN(no_inputs, no_outputs, 10, 128)
     
     #compile the model, choose loss function
-    loss_function = lf.permutation_loss_wrapper(int(no_outputs/3))
+    loss_function = permutation_loss_wrapper(int(no_outputs/3))
     opt = Adam(lr=LEARNING_RATE)
-    model.compile(optimizer=opt, loss=loss_function, metrics=['accuracy'])    
+    model.compile(optimizer=opt, loss=loss_function, metrics=['accuracy'])
+    
     
     #train the model
-    model.fit(train_data, train_labels, epochs=NO_EPOCHS, batch_size=BATCH_SIZE)
+    training = model.fit(train_data, train_labels, 
+                         epochs=NO_EPOCHS, batch_size=BATCH_SIZE, validation_split=VALIDATION_SPLIT)
     
     #plot predictions
     predictions = model.predict(eval_data)
@@ -54,6 +57,5 @@ def main():
     figure.show()
     
     return model, predictions, training
-
 if __name__ == '__main__':
     model, predictions, training = main()
