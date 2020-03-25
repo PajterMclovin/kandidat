@@ -99,6 +99,46 @@ def plot_predictions(prediction, labels, bins=500):
     figure.tight_layout()
     return figure, axes, events
 
+def plot_accuracy(history):
+    """
+    Learning curve; plot training and validation ACCURACY from model history
+    
+    Args:
+        history : tf.keras.callbacks.History object returned from model.fit
+    Returns:
+        -
+    Raises:
+        TypeError : if history is not History object
+    """
+    if not isinstance(history, tf.keras.callbacks.History):
+        raise TypeError('history must of type tf.keras.callbacks.History')
+    plt.plot(history.history['accuracy'])
+    plt.plot(history.history['val_accuracy'])
+    plt.title('model accuracy')
+    plt.ylabel('accuracy')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'val'], loc='upper left')
+
+def plot_loss(history):
+    """
+    Learning curve; plot training and validation LOSS from model history
+    
+    Args:
+        history : tf.keras.callbacks.History object returned from model.fit
+    Returns:
+        -
+    Raises:
+        TypeError : if history is not History object
+    """
+    if not isinstance(history, tf.keras.callbacks.History):
+        raise TypeError('history must of type tf.keras.callbacks.History')
+    plt.plot(history.history['loss'])
+    plt.plot(history.history['val_loss'])
+    plt.title('model accuracy')
+    plt.ylabel('accuracy')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'val'], loc='upper left')
+
 def get_permutation_tensor(n):
     P = np.zeros((factorial(n), 3*n, 3*n))
     depth = 0
