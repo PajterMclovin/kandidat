@@ -2,15 +2,14 @@
     
     Construction and training of a neural network. Easy to make changes to any 
     parameters and most importantly to implements different structures.
-
 """
 
 from tensorflow.keras.optimizers import Adam
 from time import time
 import h5py
 
-from models import FCN, FCN_test
-from loss_functions import relative_loss, permutation_loss_wrapper
+from models import FCN
+import loss_functions as lf
 from utils import load_data, get_eval_data, plot_predictions
 
 ## ----------------------------- PARAMETERS -----------------------------------
@@ -20,7 +19,7 @@ NPZ_DATAFILE = 'test.npz'                       #or import sys and use sys.argv[
 TOTAL_PORTION = 1.0                             #portion of file data to be used, (0,1]
 EVAL_PORTION = 0.1                              #portion of total data for final evalutation (0,1)
 
-NO_EPOCHS = 1                                   #Number of times to go through training data
+NO_EPOCHS = 20                                   #Number of times to go through training data
 BATCH_SIZE = 300                                #The training batch size
 LEARNING_RATE = 1e-4                            #Learning rate/step size
 VALIDATION_SPLIT = 0.1                          #??
@@ -42,7 +41,7 @@ def main():
     model = FCN(no_inputs, no_outputs, 10, 128)
     
     #compile the model, choose loss function
-    loss_function = permutation_loss_wrapper(int(no_outputs/3))
+    loss_function = lf.permutation_loss_wrapper(int(no_outputs/3))
     opt = Adam(lr=LEARNING_RATE)
     model.compile(optimizer=opt, loss=loss_function, metrics=['accuracy'])
     
