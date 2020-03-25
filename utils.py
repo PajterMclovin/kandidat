@@ -4,40 +4,55 @@
     
 
 """
-
+import tensorflow as tf
 import numpy as np
 from tensorflow.keras import layers
+from tensorflow.keras.backend import variable
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
+from itertools import permutations
+from math import factorial
 
-def load_data(npz_file_name, total_portion, train_portion):
+def load_data(npz_file_name, total_portion):
     """
     Reads the relevant data from a npz file for an energy/theta output network.
     
     Args:
         npz_file_name : address string to .npz-file containing simulation data
         total_portion : the actual amount of total data to be used
-        train_portion : the amount of used data to traing the network, the other part
-                            is used for evaluation between epochs (and afterwards?)
     Returns:
-        training data, training labels, evaluation data, evaluation labels
+        all data and labels
     Raises:
-        ValueError : if portions is not properly set
+        ValueError : if portion is not properly set
     """
     if not total_portion > 0 and total_portion <= 1:
-        raise ValueError('total_portion must be in the interval (0,1]')
-    if not train_portion > 0 and train_portion < 1:
-        raise ValueError('train_portion must be in the interval (0,1)')
-    
+        raise ValueError('total_portion must be in the interval (0,1].')
     print('Reading data...')
     data_set = np.load(npz_file_name)
     det_data = data_set['detector_data']
     labels = data_set['energy_labels']
-    no_used_events = int(len(labels)*total_portion)
-    no_train = int(train_portion*no_used_events)
-    print('Done! Using', no_train, 'training events and', no_used_events-no_train, 'evaluation events.')
-    return det_data[:no_train], labels[:no_train], det_data[no_train:no_used_events], labels[no_train:no_used_events]
+    no_events = int(len(labels)*total_portion)
+    print('Using {} simulated events in total.'.format(no_events))
+    return det_data[:no_events], labels[:no_events]
 
+def get_eval_data(data, labels, eval_portion):
+    """
+    Detach final evaluation data.
+    
+    Args:
+        data : dataset to split in two
+        labels : corresponding data labels
+        eval_portion : the amount of data for final evaluation
+    Returns:
+        training/validation data and labels
+        final evaluation data and labels
+    Raises:
+        ValueError : if portion is not properly set
+    """
+    if not eval_portion > 0 and eval_portion < 1:
+        raise ValueError('eval_portion must be in interval (0,1).')
+    no_eval = int(len(data)*eval_portion)
+    return data[no_eval:], labels[no_eval:], data[:no_eval], labels[:no_eval]
 
 
 def sort_data(old_npz, new_npz):
@@ -73,22 +88,20 @@ def plot_predictions(prediction, labels, bins=500):
         prediction : use model.predict(data)
         labels : to compare with predictions
     Returns:
-        figure : matplotlib.pyplot.figure.Figure
-        axes : matplotlib.axes.SubplotBase (tuple x3)
-        events : dict with the plotted data, see below
-    Raises:ror : if data and labels is not the same length
-        TypeError : if model is not a keras.Model object
+        figure, axes, events (dict)
+    Raises : if data and labels is not the same length
+        ValueError : if prediction and labels is not of same length
     """
-    if len(prediction)!=len(labels):
-        raise ValueError('prediction and labels need to be of same length')
+    if not len(prediction)==len(labels):
+        raise TypeError('The prediction must be of same length as labels.') 
         
     events = {'predicted_energy': prediction[::,0::3].flatten(),
               'correct_energy': labels[::,0::3].flatten(), 
               
-              'predicted_theta': prediction[::,1::3].flatten(),
+              'predicted_theta': np.mod(prediction[::,1::3],np.pi).flatten(),
               'correct_theta': labels[::,1::3].flatten(),
               
-              'predicted_phi': np.mod(prediction[::,2::3], 2*np.pi).flatten(),
+              'predicted_phi': np.mod(prediction[::,2::3],2*np.pi).flatten(),
               'correct_phi': labels[::,2::3].flatten()}
     
     figure, axes = plt.subplots(1,3, figsize=(13, 5))
@@ -98,6 +111,7 @@ def plot_predictions(prediction, labels, bins=500):
     image.append(axes[2].hist2d(events['correct_phi'], events['predicted_phi'], bins=bins, norm=LogNorm(), cmax = 1001))
     figure.tight_layout()
     return figure, axes, events
+
 
 def plot_accuracy(history):
     """
@@ -139,6 +153,7 @@ def plot_loss(history):
     plt.xlabel('epoch')
     plt.legend(['train', 'val'], loc='upper left')
 
+
 def get_permutation_tensor(n):
     P = np.zeros((factorial(n), 3*n, 3*n))
     depth = 0
@@ -154,7 +169,6 @@ def get_identity_tensor(n):
             for i in range(n):
                 I[depth, 3*i:3*i+3, 3*i:3*i+3] = np.identity(3)
     return variable(I)
-
 
 ### ----------------------------- INSPIRATION ---------------------------------
     
