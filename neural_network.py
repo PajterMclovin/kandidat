@@ -20,7 +20,7 @@ NPZ_DATAFILE = 'test.npz'                       #or import sys and use sys.argv[
 TOTAL_PORTION = 1.0                             #portion of total data to be used, [0,1]
 TRAIN_PORTION = 0.8                             #portion of used data for training, [0,1]
 
-NO_EPOCHS = 5                                   #Number of times to go through training data
+NO_EPOCHS = 20                                   #Number of times to go through training data
 BATCH_SIZE = 300                                #The training batch size
 
 
@@ -41,9 +41,9 @@ def main():
     model = FCN(no_inputs, no_outputs, 10, 128)
     
     #compile the model, choose loss function
-    loss_function = permutation_loss_wrapper(int(no_outputs/3))
+    loss_function = lf.permutation_loss_wrapper(int(no_outputs/3))
     opt = Adam(lr=LEARNING_RATE)
-    model.compile(optimizer=opt, loss=loss_function, metrics=['accuracy'])
+    model.compile(optimizer=opt, loss=loss_function, metrics=['accuracy'])    
     
     #train the model
     model.fit(train_data, train_labels, epochs=NO_EPOCHS, batch_size=BATCH_SIZE)
