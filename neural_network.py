@@ -5,7 +5,6 @@
 
 """
 
-from tensorflow.keras.callbacks import TensorBoard #,CSVlogger
 from tensorflow.keras.optimizers import Adam
 from time import time
 import matplotlib.pyplot
@@ -46,12 +45,8 @@ def main():
     opt = Adam(lr=LEARNING_RATE)
     model.compile(optimizer=opt, loss=loss_function, metrics=['accuracy'])
     
-    #for analyzing the learning curve etc.
-    print('tensorboard saved as: ' + NAME)
-    tensorboard = TensorBoard(log_dir='logs\{}'.format(NAME))
-    
     #train the model
-    model.fit(train_data, train_labels, epochs=NO_EPOCHS, batch_size=BATCH_SIZE, callbacks=[tensorboard])
+    model.fit(train_data, train_labels, epochs=NO_EPOCHS, batch_size=BATCH_SIZE)
     
     #plot predictions
     predictions = model.predict(eval_data)
