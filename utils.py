@@ -1,8 +1,6 @@
 """ @PETER HALLDESTAM, 2020
-
     Help methods used in neural_network.py
     
-
 """
 import tensorflow as tf
 import numpy as np
