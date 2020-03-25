@@ -99,6 +99,21 @@ def plot_predictions(prediction, labels, bins=500):
     figure.tight_layout()
     return figure, axes, events
 
+def get_permutation_tensor(n):
+    P = np.zeros((factorial(n), 3*n, 3*n))
+    depth = 0
+    for perm in permutations(range(n)):    
+        for i in range(n):
+            P[depth, 3*i:3*i+3:, 3*perm[i]:3*perm[i]+3:] = np.identity(3)
+        depth += 1
+    return variable(P)
+
+def get_identity_tensor(n):
+    I = np.zeros((factorial(n), 3*n, 3*n))
+    for depth in range(factorial(n)):
+            for i in range(n):
+                I[depth, 3*i:3*i+3, 3*i:3*i+3] = np.identity(3)
+    return variable(I)
 
 
 ### ----------------------------- INSPIRATION ---------------------------------
