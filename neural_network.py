@@ -19,7 +19,7 @@ NPZ_DATAFILE = 'test.npz'                       #or import sys and use sys.argv[
 TOTAL_PORTION = 1.0                             #portion of file data to be used, (0,1]
 EVAL_PORTION = 0.1                              #portion of total data for final evalutation (0,1)
 
-NO_EPOCHS = 20                                   #Number of times to go through training data
+NO_EPOCHS = 20                                  #Number of times to go through training data
 BATCH_SIZE = 300                                #The training batch size
 LEARNING_RATE = 1e-4                            #Learning rate/step size
 VALIDATION_SPLIT = 0.1                          #??

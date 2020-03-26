@@ -76,7 +76,44 @@ def sort_data(old_npz, new_npz):
     np.savez(new_npz, detector_data=data_set['detector_data'], energy_labels=sorted_labels)
     return sorted_labels
 
+def data_to_cartesian(old_npz, new_npz):
+    """
+    Converts the energy_labels of the of the .npz-file to cartesian coordinates
+    
+    Parameters
+    ----------
+    old_npz : string
+        file whose energy labels to convert to cartesian coordinates
+    new_npz : string
+        file name for new npz-file
 
+    Returns
+    -------
+    None.
+
+    """
+    data_set = np.load(old_npz)
+    labels = data_set['energy_labels']
+    
+    max_mult = int(len(labels[0])/3)
+    
+    theta = labels[::, 1::3]
+    phi = labels[::, 2::3]
+    
+    x = tf.math.multiply(tf.math.sin(theta), tf.math.cos(phi))
+    y = tf.math.multiply(tf.math.sin(theta), tf.math.sin(phi))
+    z = tf.math.cos(theta)
+    
+    cart_labels = np.zeros([len(labels), 4*max_mult])
+    
+    cart_labels[::, 0::4] = labels[::, 0::3]
+    cart_labels[::, 1::4] = x
+    cart_labels[::, 2::4] = y
+    cart_labels[::, 3::4] = z
+    
+    np.savez(new_npz, detector_data=data_set['detector_data'], energy_labels=cart_labels)
+    return cart_labels
+    
 
 def plot_predictions(prediction, labels, bins=500):
     """
