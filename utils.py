@@ -147,6 +147,43 @@ def plot_predictions(prediction, labels, bins=500):
     figure.tight_layout()
     return figure, axes, events
 
+def plot_predictions_cart(prediction, labels, bins=500):
+    """
+    Use to plot a models predictions, with cartesian coordinates
+    
+    Args:
+        prediction : use model.predict(data)
+        labels : to compare with predictions
+    Returns:
+        figure, axes, events (dict)
+    Raises : if data and labels is not the same length
+        ValueError : if prediction and labels is not of same length
+    """
+    if not len(prediction)==len(labels):
+        raise TypeError('The prediction must be of same length as labels.') 
+        
+    events = {'predicted_energy': prediction[::,0::4].flatten(),
+              'correct_energy': labels[::,0::4].flatten(), 
+              
+              'predicted_x': prediction[::,1::4].flatten(),
+              'correct_x': labels[::,1::4].flatten(),
+              
+              'predicted_y': prediction[::,2::4].flatten(),
+              'correct_y': labels[::,2::4].flatten(),
+              
+              'predicted_z': prediction[::,3::4].flatten(),
+              'correct_z': labels[::,3::4].flatten()}
+    
+    figure, axes = plt.subplots(1,4, figsize=(13, 5))
+    image = []
+    image.append(axes[0].hist2d(events['correct_energy'], events['predicted_energy'], bins=bins, norm=LogNorm(), cmax = 1001))
+    image.append(axes[1].hist2d(events['correct_x'], events['predicted_x'], bins=bins, norm=LogNorm(), cmax = 1001))
+    image.append(axes[2].hist2d(events['correct_y'], events['predicted_y'], bins=bins, norm=LogNorm(), cmax = 1001))
+    image.append(axes[3].hist2d(events['correct_z'], events['predicted_z'], bins=bins, norm=LogNorm(), cmax = 1001))
+    figure.tight_layout()
+    return figure, axes, events
+    
+
 
 def plot_accuracy(history):
     """

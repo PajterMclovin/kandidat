@@ -134,3 +134,19 @@ def vector_loss(y, y_):
      
      return K.mean(loss_energy + loss_angles)
 
+def vector_loss_cart(u,u_):
+    """
+    
+    vektorbaserad kostnadsfuntion, indata redan i kartesiska koordinater
+
+    """
+    
+    energy, energy_ = u[::,0::4], u_[::,0::4]
+    x, x_ = u[::,1::4], u_[::,1::4]
+    y, y_ = u[::,2::4], u_[::,2::4]
+    z, z_ = u[::,3::4], u_[::,3::4]
+    
+    loss_energy = LAMBDA_ENERGY*K.square(energy-energy_)
+    loss_spacial = LAMBDA_VECTOR*(1-tf.math.multiply(x,x_)-tf.math.multiply(y,y_)-tf.math.multiply(z,z_))
+    
+    return K.mean(loss_energy + loss_spacial)

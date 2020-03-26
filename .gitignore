@@ -130,3 +130,4 @@ dmypy.json
 XB_mixed_data_1-2_653348.npz
 test_c.npz
 sorted.npz
+sorted_cart.npz
