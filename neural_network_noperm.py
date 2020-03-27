@@ -16,7 +16,7 @@ from plotting import plot_predictions
 ## ----------------------------- PARAMETERS -----------------------------------
 NAME = 'test_model-{}'.format(int(time()))
 
-NPZ_DATAFILE = 'sorted.npz'                       #or import sys and use sys.argv[1]
+NPZ_DATAFILE = 'test.npz'                       #or import sys and use sys.argv[1]
 TOTAL_PORTION = 1.0                             #portion of file data to be used, (0,1]
 EVAL_PORTION = 0.2                              #portion of total data for final evalutation (0,1)
 
