@@ -19,11 +19,6 @@ OFFSET_ENERGY = 0.1     #don't divide with 0! used in relative loss
 LAMBDA_VECTOR = 1       #used in vector loss
 
 
-"""
-    OBS. why calculate the loss for all permutations? Håkan thinks this would 
-    be a good idea.
-    
-"""
 def permutation_loss_wrapper(max_mult):
     """
     Wrapper function for permutation_loss
@@ -36,6 +31,7 @@ def permutation_loss_wrapper(max_mult):
     def loss(y, y_):
         return permutation_loss(y, y_, permutation_tensor, identity_tensor)
     return loss
+
 
 def permutation_loss(y, y_, permutation_tensor, identity_tensor):
     """
@@ -52,15 +48,11 @@ def permutation_loss(y, y_, permutation_tensor, identity_tensor):
     y_ = tf.transpose(K.dot(y_, permutation_tensor), perm=[1,0,2])
     y = tf.transpose(K.dot(y, identity_tensor), perm=[1,0,2])
     
-    energy, energy_ = y[::,::,0::3], y_[::,::,0::3]
-    theta, theta_ = y[::,::,1::3], y_[::,::,1::3]                 #zenith (0,pi)
-    phi, phi_ = y[::,::,2::3], y_[::,::,2::3]                      #azimuth (0,2pi)
-
-    loss_energy = LAMBDA_ENERGY*K.mean(K.square(energy-energy_))
-    loss_theta = LAMBDA_THETA*K.mean(K.square(theta-theta_))
-    loss_phi = LAMBDA_PHI*K.mean(K.square(phi-phi_))
+    loss_energy = LAMBDA_ENERGY*(K.square(y[::,::,0::3] - y_[::,::,0::3]))
+    loss_theta = LAMBDA_THETA*(K.square(y[::,::,1::3] - y_[::,::,1::3]))
+    loss_phi = LAMBDA_PHI*(K.square(y[::,::,2::3] - y_[::,::,2::3]))
     
-    return K.min(loss_energy+loss_theta+loss_phi)
+    return K.mean(K.min(K.sum(loss_energy+loss_theta+loss_phi, axis=2), axis=0))
 
 
 def relative_loss(y, y_):
@@ -74,7 +66,7 @@ def relative_loss(y, y_):
     Returns:
         loss
     """
-    energy, energy_ = y[::,0::3], y_[::,0::3]
+    energy, energy_ = y[::,0::], y_[::,0::3]
     theta, theta_ = y[::,1::3], y_[::,1::3]                 #zenith (0,pi)
     phi, phi_ = y[::,2::3], y_[::,2::3]                      #azimuth (0,2pi)
     
@@ -112,11 +104,11 @@ def absolute_loss(y, y_):
     loss_phi = LAMBDA_PHI*K.square(tf.math.mod(phi - phi_ + np.pi, 2*np.pi) - np.pi)
     return K.mean(loss_energy + loss_theta + loss_phi)
 
-  
+### ---------- Davids code ----------------------------------------------------    
+
 def vector_loss(y, y_):
      
      """ 
-
      vektorbaserad kostnadsfunktion, förmodar att indata är i samma format som 2019 (energi, vinklar)
      """
 
@@ -138,7 +130,6 @@ def vector_loss_cart(u,u_):
     """
     
     vektorbaserad kostnadsfuntion, indata redan i kartesiska koordinater
-
     """
     
     energy, energy_ = u[::,0::4], u_[::,0::4]
