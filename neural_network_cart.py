@@ -10,7 +10,8 @@ import h5py
 
 from models import FCN
 import loss_functions as lf
-from utils import load_data, get_eval_data, plot_predictions_cart
+from utils import load_data, get_eval_data
+from plotting import plot_predictions_cart
 
 ## ----------------------------- PARAMETERS -----------------------------------
 NAME = 'test_model-{}'.format(int(time()))
@@ -52,7 +53,7 @@ def main():
     
     #plot predictions
     predictions = model.predict(eval_data)
-    figure, axes, rec_events = plot_predictions_cart(predictions, eval_labels)
+    figure, axes, rec_events = plot_predictions_cart(predictions, eval_labels, permutation=False)
     figure.show()
     
     return model, predictions, training
