@@ -7,6 +7,7 @@
 
 from tensorflow.keras.optimizers import Adam
 from time import time
+from sys import argv
 import h5py
 
 from models import FCN
@@ -17,7 +18,7 @@ from plotting import plot_predictions
 ## ----------------------------- PARAMETERS -----------------------------------
 NAME = 'test_model-{}'.format(int(time()))
 
-NPZ_DATAFILE = 'XB_mixed_data_1-2_653348.npz'   #or import sys and use sys.argv[1]
+NPZ_DATAFILE = argv[1]
 TOTAL_PORTION = 1.0                             #portion of file data to be used, (0,1]
 EVAL_PORTION = 0.1                              #portion of total data for final evalutation (0,1)
 
