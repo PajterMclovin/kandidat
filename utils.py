@@ -11,8 +11,6 @@ from tensorflow.keras import backend as K
 from itertools import permutations
 from math import factorial
 
-LAMBDA_ENERGY, LAMBDA_THETA, LAMBDA_PHI = 1, 1, 1
-
 
 def load_data(npz_file_name, total_portion):
     """
@@ -91,7 +89,7 @@ def get_permutation_tensor(n):
         for i in range(n):
             permutation_tensor[depth, 3*i:3*i+3:, 3*perm[i]:3*perm[i]+3:] = np.identity(3)
         depth += 1
-    return K.variable(permutation_tensor)
+    return K.constant(permutation_tensor)
 
 
 def get_identity_tensor(n):
@@ -102,10 +100,10 @@ def get_identity_tensor(n):
     for depth in range(factorial(n)):
             for i in range(n):
                 identity_tensor[depth, 3*i:3*i+3, 3*i:3*i+3] = np.identity(3)
-    return K.variable(identity_tensor)
+    return K.constant(identity_tensor)
 
 
-def get_permutation_match(y, y_):
+def get_permutation_match(y, y_, lambda_energy=1, lambda_theta=1, lambda_phi=1):
     """
     Sorts the predictions with corresponding label as the minimum of a square 
     error loss function. Must be used BEFORE plotting the "lasersvärd".
@@ -124,9 +122,9 @@ def get_permutation_match(y, y_):
         for p in permutations(range(max_mult), max_mult):
             perm_loss = 0
             for i in range(max_mult):
-                energy_loss = LAMBDA_ENERGY*np.power(x[3*i] - x_[3*p[i]], 2)
-                theta_loss = LAMBDA_THETA*np.power(np.mod(x[3*i+1], 2*np.pi) - x_[3*p[i]+1], 2)
-                phi_loss = LAMBDA_PHI*np.power(np.mod(x[3*i+2], 2*np.pi) - x_[3*p[i]+2], 2)
+                energy_loss = lambda_energy*np.power(x[3*i] - x_[3*p[i]], 2)
+                theta_loss = lambda_theta*np.power(np.mod(x[3*i+1], 2*np.pi) - x_[3*p[i]+1], 2)
+                phi_loss = lambda_phi*np.power(np.mod(x[3*i+2], 2*np.pi) - x_[3*p[i]+2], 2)
                 perm_loss += energy_loss + theta_loss + phi_loss
             if perm_loss < min_loss:
                 min_loss = perm_loss
