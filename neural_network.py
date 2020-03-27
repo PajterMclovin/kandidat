@@ -27,6 +27,10 @@ BATCH_SIZE = 300                                #The training batch size
 LEARNING_RATE = 1e-4                            #Learning rate/step size
 VALIDATION_SPLIT = 0.1                          #??
 
+## FCN params ##
+DEPTH = 10
+WIDTH = 128
+
 def main():
     #load simulation data. OBS. labels need to be ordered in decreasing energy!
     data, labels = load_data(NPZ_DATAFILE, TOTAL_PORTION)
@@ -41,7 +45,7 @@ def main():
     no_outputs = len(train_labels[0])               #no. output nodes (3*max multiplicity) 
     
     #initiate the network structure
-    model = FCN(no_inputs, no_outputs, 10, 128)
+    model = FCN(no_inputs, no_outputs, DEPTH, WIDTH)
     
     #compile the model, choose loss function
     loss_function = permutation_loss_wrapper(int(no_outputs/3))
