@@ -53,7 +53,7 @@ def main():
     
     #plot predictions
     predictions = model.predict(eval_data)
-    figure, axes, rec_events = plot_predictions(predictions, eval_labels)
+    figure, axes, rec_events = plot_predictions(predictions, eval_labels, permutation=False)
     figure.show()
     
     return model, predictions, training
