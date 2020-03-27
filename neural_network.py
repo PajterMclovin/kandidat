@@ -10,7 +10,8 @@ import h5py
 
 from models import FCN
 import loss_functions as lf
-from utils import load_data, get_eval_data, plot_predictions
+from utils import load_data, get_eval_data
+from plotting import plot_predictions
 
 ## ----------------------------- PARAMETERS -----------------------------------
 NAME = 'test_model-{}'.format(int(time()))
