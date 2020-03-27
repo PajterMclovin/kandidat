@@ -132,7 +132,7 @@ def absolute_loss(y, y_):
     loss_phi = LAMBDA_PHI*K.square(tf.math.mod(phi - phi_ + np.pi, 2*np.pi) - np.pi)
     return K.mean(loss_energy + loss_theta + loss_phi)
 
-### ---------- Davids code ----------------------------------------------------    
+### ---------- Davids code ----------------------------------------------------      
 
 def vector_loss(y, y_):
      
@@ -165,7 +165,23 @@ def vector_loss_cart(u,u_):
     y, y_ = u[::,2::4], u_[::,2::4]
     z, z_ = u[::,3::4], u_[::,3::4]
     
+    dot = x*x_ + y*y_ + z*z_
+    norm = K.sqrt(x*x + y*y + z*z)
+    
     loss_energy = LAMBDA_ENERGY*K.square(energy-energy_)
-    loss_spacial = LAMBDA_VECTOR*(1-tf.math.multiply(x,x_)-tf.math.multiply(y,y_)-tf.math.multiply(z,z_))
+    loss_spacial = LAMBDA_VECTOR*K.square(1-dot/norm)
     
     return K.mean(loss_energy + loss_spacial)
+
+def mean_square_cart(u,u_):
+    
+    energy, energy_ = u[::,0::4], u_[::,0::4]
+    x, x_ = u[::,1::4], u_[::,1::4]
+    y, y_ = u[::,2::4], u_[::,2::4]
+    z, z_ = u[::,3::4], u_[::,3::4]
+    
+    loss_energy = LAMBDA_ENERGY*K.square(energy-energy_)
+    loss_x = LAMBDA_VECTOR*K.square(x-x_)
+    loss_y = LAMBDA_VECTOR*K.square(y-y_)
+    loss_z = LAMBDA_VECTOR*K.square(z-z_)
+    return K.mean(loss_energy + loss_x + loss_y + loss_z)
