@@ -20,7 +20,7 @@ def FCN(no_inputs, no_outputs, no_layers, no_nodes):
     """
     inputs = Input(shape=(no_inputs,), dtype='float32')
     x = Dense(no_nodes, activation='relu')(inputs)
-    for i in range(no_layers-2):
+    for i in range(no_layers):
         x = Dense(no_nodes, activation='relu')(x)
     outputs = Dense(no_outputs, activation='relu')(x)
     return Model(inputs, outputs)
