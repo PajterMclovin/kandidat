@@ -11,7 +11,7 @@ from tensorflow.keras import backend as K
 from itertools import permutations
 from math import factorial
 
-from loss_functions import LAMBDA_ENERGY, LAMBDA_THETA, LAMBDA_PHI
+LAMBDA_ENERGY, LAMBDA_THETA, LAMBDA_PHI = 1, 1, 1
 
 
 def load_data(npz_file_name, total_portion):
