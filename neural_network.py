@@ -11,7 +11,7 @@ from sys import argv
 import h5py
 
 from models import FCN
-from loss_functions import permutation_loss_wrapper
+from loss_functions import loss_function_wrapper
 from utils import load_data, get_eval_data
 from plotting import plot_predictions
 
