@@ -9,7 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm, LinearSegmentedColormap
 
-from utils import get_permutation_match
+from utils import get_permutation_match, cartesian_to_spherical
 
 def truncate_colormap(cmap, minval=0.0, maxval=1.0, n=100):
     new_cmap = LinearSegmentedColormap.from_list(
@@ -17,7 +17,7 @@ def truncate_colormap(cmap, minval=0.0, maxval=1.0, n=100):
         cmap(np.linspace(minval, maxval, n)))
     return new_cmap
 
-def plot_predictions(y, y_, bins=500, permutation=True):
+def plot_predictions(y, y_, bins=500, permutation=True, cartesian_coordinates=False, loss_type='mse'):
     """
     Use to plot a models predictions in similar format as previous years, i.e. 2d histograms ("lasersvärd")
     
@@ -26,6 +26,8 @@ def plot_predictions(y, y_, bins=500, permutation=True):
         labels : to compare with predictions
         bins : number of bins i histogram
         permutation : True if network used permutational loss, False if not
+        cartesian_coordinate : True if network is trained with cartesin coordinates
+        loss_type : used to match permutations
     Returns:
         figure, axes, events (dict)
     Raises : if data and labels is not the same length
@@ -35,8 +37,12 @@ def plot_predictions(y, y_, bins=500, permutation=True):
         raise TypeError('The prediction must be of same length as labels.') 
       
     if permutation:
-        y, y_ = get_permutation_match(y, y_)
-        
+        y, y_ = get_permutation_match(y, y_, cartesian_coordinates=cartesian_coordinates, loss_type=loss_type)
+
+    if cartesian_coordinates:
+        y = cartesian_to_spherical(y)
+        y_ = cartesian_to_spherical(y_)
+                
     events = {'predicted_energy': y[::,0::3].flatten(),
               'correct_energy': y_[::,0::3].flatten(), 
               
@@ -57,7 +63,7 @@ def plot_predictions(y, y_, bins=500, permutation=True):
     max_energy = 10
     max_theta = np.pi
     max_phi = 2*np.pi
-    line_color = 'red'
+    line_color = 'blue'
     
     line = np.linspace(0,max_energy)
     for i in range(0,3):
@@ -99,16 +105,19 @@ def plot_predictions(y, y_, bins=500, permutation=True):
     plt.sca(axs[0])
     plt.xticks(np.linspace(0, 10, 6),['0','2','4','6','8','10'])
     plt.yticks(np.linspace(0, 10, 6),['0','2','4','6','8','10'])
+    
     plt.sca(axs[1])
+    title = 'loss: {}, permutation: {}, cartesian: {}'.format(loss_type, permutation, cartesian_coordinates)
+    plt.title(title)
     plt.xticks(np.linspace(0, np.pi, 3),['0','$\pi/2$','$\pi$'])
     plt.yticks(np.linspace(0, np.pi, 3),['0','$\pi/2$','$\pi$'])
+    
     plt.sca(axs[2])
     plt.xticks(np.linspace(0, 2*np.pi, 3),['0','$\pi$','$2\pi$'])
     plt.yticks(np.linspace(0, 2*np.pi, 3),['0','$\pi$','$2\pi$'])
     
     fig.tight_layout()
     return fig, axs, events
-
 
 def plot_accuracy(history):
     """
