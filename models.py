@@ -24,5 +24,33 @@ def FCN(no_inputs, no_outputs, no_layers, no_nodes):
         x = Dense(no_nodes, activation='relu')(x)
     outputs = Dense(no_outputs, activation='relu')(x)
     return Model(inputs, outputs)
+
+
+def CNN(no_inputs, no_outputs, pooling_type):
     
+    """
+        (#filters, kernel size, stride, activation)
+    
+    """
+    NEIGHBORS_A = 16
+    NEIGHBORS_D = 19
+    
+    A_mat = np.load('conv_mat_A.npy')
+    D_mat = np.load('conv_mat_D.npy')
+    
+    inputs = Input(shape=(no_inputs,), dtype='int32')
+    
+    A_in = tf.matmul(inputs, A_mat)
+    D_in = tf.matmul(inputs, D_mat)
+    
+    x_A = Conv1D(162, NEIGHBORS_A, NEIGHBORS_A, activation='relu')(A_in)
+    x_D = Conv1D(162, NEIGHBORS_D, NEIGHBORS_D, activation='relu')(D_in)
+    
+    x_A = Conv1D(16, 4, 2, activation='relu')(x_A)
+    x_D = Conv1D(16, 4, 2, activation='relu')(x_D)
+    
+    #behöver mer arbete, trasig
+    
+    
+    return Model(inputs, outputs)
 
