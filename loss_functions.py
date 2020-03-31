@@ -7,8 +7,9 @@
 import numpy as np
 import tensorflow as tf
 import tensorflow.keras.backend as K
+from math import factorial
+from itertools import permutations
 
-from utils import get_permutation_tensor, get_identity_tensor
 
 # LOSS FUNCTION PARAMETERS
 LAMBDA_ENERGY = 0.1
@@ -18,6 +19,7 @@ LAMBDA_PHI = 0.1
 OFFSET_ENERGY = 0.1     #don't divide with 0! used in relative loss
 LAMBDA_VECTOR = 1       #used in vector loss
 LAMBDA_XYZ = 1          #used in cartesian loss
+
 
 
 def loss_function_wrapper(max_mult, loss_type='mse', permutation=True, cartesian_coordinates=False):
@@ -54,11 +56,11 @@ def loss_function_wrapper(max_mult, loss_type='mse', permutation=True, cartesian
         print('Using a permutations loss function in cartesian coordinates of type ' + loss_type)
         permutation_tensor = get_permutation_tensor(max_mult, m=4)
         identity_tensor = get_identity_tensor(max_mult, m=4)
-        return lambda y, y_: cartesian_loss(y, y_, permutation_tensor, identity_tensor, loss_type)
+        return lambda y, y_: permutation_loss(y, y_, permutation_tensor, identity_tensor, loss_type, cartesian_coordinates=True)
 
 
 
-def permutation_loss(y, y_, permutation_tensor, identity_tensor, loss_type):
+def permutation_loss(y, y_, permutation_tensor, identity_tensor, loss_type, cartesian_coordinates=False):
     """
     Loss functions that enable training without an ordered label set. Used via
     the wrapper function permutation_loss_wrapper above. It calculates the loss
@@ -74,12 +76,7 @@ def permutation_loss(y, y_, permutation_tensor, identity_tensor, loss_type):
     y = tf.transpose(K.dot(y, identity_tensor), perm=[1,0,2])
     
     #what loss functions to minimize
-    if loss_type=='mse': loss = mse_loss(y, y_)
-    elif loss_type=='modulo': loss = modulo_loss(y, y_) 
-    elif loss_type=='vector': loss = davids_vector_loss(y, y_)
-    elif loss_type=='cosine': loss = cosine_loss(y, y_)
-    else: raise ValueError('invalid loss function type')
-    
+    loss = Loss_function(loss_type, cartesian_coordinates=cartesian_coordinates).loss(y, y_)
     return K.mean(K.min(K.sum(loss, axis=2), axis=0))
 
 
@@ -93,67 +90,91 @@ def non_permutation_loss(y, y_, loss_type):
     y = K.expand_dims(y, axis=0)
     y_ = K.expand_dims(y_, axis=0)
     
-    if loss_type=='mse': loss = mse_loss(y, y_)
-    elif loss_type=='modulo': loss = modulo_loss(y, y_) 
-    elif loss_type=='vector': loss = davids_vector_loss(y, y_)
-    elif loss_type=='cosine': loss = cosine_loss(y, y_)
-    else: raise ValueError('invalid loss function type')
-        
+    loss = Loss_function(loss_type).loss(y, y_)
     return K.mean(K.sum(loss, axis=1))
 
 
-def cartesian_loss(y, y_, permutation_tensor, identity_tensor, loss_type):
+
+
+
+class Loss_function(object):
+    def __init__(self, loss_type, cartesian_coordinates=False):
+        self.loss = False
+        if cartesian_coordinates:
+            if loss_type=='mse': self.loss = self.cartesian_mse_loss
+        
+        else:
+            if loss_type=='mse': self.loss = self.mse_loss
+            elif loss_type=='modulo': self.loss = self.modulo_loss
+            elif loss_type=='vector': self.loss = self.davids_vector_loss
+            elif loss_type=='cosine': self.loss = self.cosine_loss
+        
+        if not self.loss: raise ValueError('invalid loss function type')
+        
+    ## ------------------ SPHERICAL COORDINATE LOSS FUNCTIONS ---------------------
+    def mse_loss(self, y, y_):
+        loss_energy = K.square(y[::,::,0::3] - y_[::,::,0::3])
+        loss_theta = K.square(y[::,::,1::3] - y_[::,::,1::3])
+        loss_phi = K.square(y[::,::,2::3] - y_[::,::,2::3])
+        return LAMBDA_ENERGY*loss_energy + LAMBDA_THETA*loss_theta + LAMBDA_PHI*loss_phi
+    
+    def modulo_loss(self, y, y_):
+        loss_energy = LAMBDA_ENERGY*K.square(tf.divide(y[::,::,0::3] - y_[::,::,0::3], y_[::,::,0::3] + OFFSET_ENERGY))
+        loss_theta = LAMBDA_THETA*K.square(y[::,::,1::3] - y_[::,::,1::3])
+        loss_phi = LAMBDA_PHI*K.square(tf.math.mod(y[::,::,2::3] - y_[::,::,2::3] + np.pi, 2*np.pi) - np.pi)       
+        return loss_energy+loss_theta+loss_phi
+    
+    def davids_vector_loss(self, y, y_):
+        x = tf.math.multiply(tf.math.sin(y[::,::,1::3]), tf.math.cos(y[::,::,2::3])) 
+        y = tf.math.multiply(tf.math.sin(y[::,::,1::3]), tf.math.sin(y[::,::,2::3]))
+        z = tf.math.cos(y[::,::,1::3])
+        
+        x_ =  tf.math.multiply(tf.math.sin(y_[::,::,1::3]), tf.math.cos(y_[::,::,2::3]))
+        y_ = tf.math.multiply(tf.math.sin(y_[::,::,1::3]), tf.math.sin(y_[::,::,2::3]))
+        z_ = tf.math.cos(y_[::,::,1::3])
+        
+        loss_energy = LAMBDA_ENERGY*K.square(y[::,::,0::3] - y_[::,::,0::3])
+        loss_vector = LAMBDA_VECTOR*(1-tf.math.multiply(x,x_)-tf.math.multiply(y,y_)-tf.math.multiply(z,z_))
+        return loss_energy+loss_vector
+    
+    def cosine_loss(self, y, y_):
+        loss_energy = LAMBDA_ENERGY*K.square(y[::,::,0::3] - y_[::,::,0::3])
+        loss_theta = LAMBDA_THETA*K.square(y[::,::,1::3] - y_[::,::,1::3])
+        loss_phi = LAMBDA_PHI*(1-K.cos(y[::,::,2::3] - y_[::,::,2::3]))    
+        return loss_energy+loss_theta+loss_phi
+    
+    ## ---------------- CARTESIAN COORDINATE LOSS FUNCTIONS -----------------------
+    
+    def cartesian_mse_loss(self, y, y_):
+        loss_energy = LAMBDA_ENERGY*K.square(y[::,::,0::4]-y_[::,::,0::4])
+        loss_x = K.square(y[::,::,1::4]-y_[::,::,1::4])
+        loss_y = K.square(y[::,::,2::4]-y_[::,::,2::4])
+        loss_z = K.square(y[::,::,3::4]-y_[::,::,3::4])
+        return LAMBDA_ENERGY*loss_energy + LAMBDA_XYZ*(loss_x + loss_y + loss_z)
+
+
+
+def get_permutation_tensor(n, m=3):
     """
-    Permutation loss functions for networks training with cartesian coordinates.
-
+    Returns a tensor containing all n! permutation matrices. Dimension: [n!, m*n, n*n]
+    m is the no. outputs per reconstructed photon (4 in cartesian coordinates)
     """
-    #get all possible combinations
-    y = tf.transpose(K.dot(y, permutation_tensor), perm=[1,0,2])
-    y_ = tf.transpose(K.dot(y_, identity_tensor), perm=[1,0,2])
-    
-    if loss_type=='mse': loss = cartesian_mse_loss(y, y_)
-    else: raise ValueError('invalid loss function type')
-    
-    return K.mean(K.min(K.sum(loss, axis=2), axis=0))
+    permutation_tensor = np.zeros((factorial(n), m*n, m*n))
+    depth = 0
+    for perm in permutations(range(n)):    
+        for i in range(n):
+            permutation_tensor[depth, m*i:m*(i+1):, m*perm[i]:m*(perm[i]+1):] = np.identity(m)
+        depth += 1
+    return K.constant(permutation_tensor)
 
 
-## ------------------ SPHERICAL COORDINATE LOSS FUNCTIONS ---------------------
-def mse_loss(y, y_):
-    loss_energy = K.square(y[::,::,0::3] - y_[::,::,0::3])
-    loss_theta = K.square(y[::,::,1::3] - y_[::,::,1::3])
-    loss_phi = K.square(y[::,::,2::3] - y_[::,::,2::3])
-    return LAMBDA_ENERGY*loss_energy + LAMBDA_THETA*loss_theta + LAMBDA_PHI*loss_phi
-
-def modulo_loss(y, y_):
-    loss_energy = LAMBDA_ENERGY*K.square(tf.divide(y[::,::,0::3] - y_[::,::,0::3], y_[::,::,0::3] + OFFSET_ENERGY))
-    loss_theta = LAMBDA_THETA*K.square(y[::,::,1::3] - y_[::,::,1::3])
-    loss_phi = LAMBDA_PHI*K.square(tf.math.mod(y[::,::,2::3] - y_[::,::,2::3] + np.pi, 2*np.pi) - np.pi)       
-    return loss_energy+loss_theta+loss_phi
-
-def davids_vector_loss(y, y_):
-    x = tf.math.multiply(tf.math.sin(y[::,::,1::3]), tf.math.cos(y[::,::,2::3])) 
-    y = tf.math.multiply(tf.math.sin(y[::,::,1::3]), tf.math.sin(y[::,::,2::3]))
-    z = tf.math.cos(y[::,::,1::3])
-    
-    x_ =  tf.math.multiply(tf.math.sin(y_[::,::,1::3]), tf.math.cos(y_[::,::,2::3]))
-    y_ = tf.math.multiply(tf.math.sin(y_[::,::,1::3]), tf.math.sin(y_[::,::,2::3]))
-    z_ = tf.math.cos(y_[::,::,1::3])
-    
-    loss_energy = LAMBDA_ENERGY*K.square(y[::,::,0::3] - y_[::,::,0::3])
-    loss_vector = LAMBDA_VECTOR*(1-tf.math.multiply(x,x_)-tf.math.multiply(y,y_)-tf.math.multiply(z,z_))
-    return loss_energy+loss_vector
-
-def cosine_loss(y, y_):
-    loss_energy = LAMBDA_ENERGY*K.square(y[::,::,0::3] - y_[::,::,0::3])
-    loss_theta = LAMBDA_THETA*K.square(y[::,::,1::3] - y_[::,::,1::3])
-    loss_phi = LAMBDA_PHI*(1-K.cos(y[::,::,2::3] - y_[::,::,2::3]))    
-    return loss_energy+loss_theta+loss_phi
-
-## ---------------- CARTESIAN COORDINATE LOSS FUNCTIONS -----------------------
-
-def cartesian_mse_loss(y, y_):
-    loss_energy = LAMBDA_ENERGY*K.square(y[::,::,0::4]-y_[::,::,0::4])
-    loss_x = K.square(y[::,::,1::4]-y_[::,::,1::4])
-    loss_y = K.square(y[::,::,2::4]-y_[::,::,2::4])
-    loss_z = K.square(y[::,::,3::4]-y_[::,::,3::4])
-    return LAMBDA_ENERGY*loss_energy + LAMBDA_XYZ*(loss_x + loss_y + loss_z)
+def get_identity_tensor(n, m=3):
+    """
+    Returns a tensor containing n! identity matrices. Dimension: [n!, m*n, m*n]
+    m is the no. outputs per reconstructed photon (4 in cartesian coordinates)
+    """
+    identity_tensor = np.zeros((factorial(n), m*n, m*n))
+    for depth in range(factorial(n)):
+            for i in range(n):
+                identity_tensor[depth, m*i:m*(i+1), m*i:m*(i+1)] = np.identity(m)
+    return K.constant(identity_tensor)
