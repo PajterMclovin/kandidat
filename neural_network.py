@@ -7,8 +7,9 @@
 
 from tensorflow.keras.optimizers import Adam
 from time import time
-from sys import argv
 import h5py
+
+import numpy as np
 
 from models import FCN
 from loss_functions import loss_function_wrapper
@@ -16,10 +17,9 @@ from utils import load_data, get_eval_data
 from plotting import plot_predictions
 
 ## ----------------------------- PARAMETERS -----------------------------------
-NAME = 'test_model-{}'.format(int(time()))
 
-NPZ_DATAFILE = 'test.npz'
-TOTAL_PORTION = 1.0                             #portion of file data to be used, (0,1]
+NPZ_DATAFILE = 'XB_mixed_data_1-2_653348.npz'   #or import sys and use sys.argv[1]
+TOTAL_PORTION = 0.3                             #portion of file data to be used, (0,1]
 EVAL_PORTION = 0.1                              #portion of total data for final evalutation (0,1)
 VALIDATION_SPLIT = 0.1                          #portion of training data for epoch validation
 CARTESIAN = True                                #train with cartesian coordinates instead of spherical
@@ -28,11 +28,8 @@ NO_EPOCHS = 1                                   #Number of times to go through t
 BATCH_SIZE = 300                                #The training batch size
 LEARNING_RATE = 1e-4                            #Learning rate/step size
 PERMUTATION = True                              #set false if using an ordered data set
-LOSS_FUNCTION = 'mse'                           #type of loss: {mse, modulo, vector, cosine}
+LOSS_FUNCTION = 'mse'                        #type of loss: {mse, modulo, vector, cosine}
 
-## FCN params ##
-DEPTH = 10
-WIDTH = 128
 
 def main():
     #load simulation data. OBS. labels need to be ordered in decreasing energy!
@@ -45,11 +42,12 @@ def main():
     
     ### ------------- BUILD, TRAIN & TEST THE NEURAL NETWORK ------------------
     
-    no_inputs = len(train_data[0])                  #no. input nodes (162 for each detector)
-    no_outputs = len(train_labels[0])               #no. output nodes (3*max multiplicity) 
+    #no. inputs/outputs based on data set
+    no_inputs = len(train_data[0])                  
+    no_outputs = len(train_labels[0])               
     
     #initiate the network structure
-    model = FCN(no_inputs, no_outputs, DEPTH, WIDTH)
+    model = FCN(no_inputs, no_outputs, 10, 128)
     
     #select loss function
     loss_function = loss_function_wrapper(int(no_outputs/3), 
@@ -63,6 +61,7 @@ def main():
     #compile the network
     model.compile(optimizer=opt, loss=loss_function, metrics=['accuracy'])
     
+    
     #train the network with training data
     training = model.fit(train_data, train_labels, 
                          epochs=NO_EPOCHS, batch_size=BATCH_SIZE,
@@ -75,7 +74,8 @@ def main():
                                                 cartesian_coordinates=CARTESIAN,
                                                 loss_type=LOSS_FUNCTION)
     
-    figure.save_fig(NAME)   #does this work?
+    
+    
     return model, predictions, training
 
 if __name__ == '__main__':
