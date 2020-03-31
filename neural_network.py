@@ -18,7 +18,7 @@ from plotting import plot_predictions
 ## ----------------------------- PARAMETERS -----------------------------------
 NAME = 'test_model-{}'.format(int(time()))
 
-NPZ_DATAFILE = argv[1]
+NPZ_DATAFILE = 'test.npz'
 TOTAL_PORTION = 1.0                             #portion of file data to be used, (0,1]
 EVAL_PORTION = 0.1                              #portion of total data for final evalutation (0,1)
 VALIDATION_SPLIT = 0.1                          #portion of training data for epoch validation
