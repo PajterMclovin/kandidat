@@ -51,6 +51,7 @@ def CNN(no_inputs, no_outputs, pooling_type):
     
     #behöver mer arbete, trasig
     
+    outputs = 0
     
     return Model(inputs, outputs)
 
