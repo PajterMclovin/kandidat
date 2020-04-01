@@ -20,7 +20,7 @@ NPZ_DATAFILE = 'sorted_cart.npz'                       #or import sys and use sy
 TOTAL_PORTION = 1.0                             #portion of file data to be used, (0,1]
 EVAL_PORTION = 0.2                              #portion of total data for final evalutation (0,1)
 
-NO_EPOCHS = 3                                 #Number of times to go through training data
+NO_EPOCHS = 10                                 #Number of times to go through training data
 BATCH_SIZE = 300                                #The training batch size
 LEARNING_RATE = 1e-4                            #Learning rate/step size
 VALIDATION_SPLIT = 0.1                          #??
@@ -42,7 +42,7 @@ def main():
     model = FCN(no_inputs, no_outputs, 10, 128)
     
     #compile the model, choose loss function
-    loss_function = lf.vector_loss_cart
+    loss_function = lf.mean_square_cart
     opt = Adam(lr=LEARNING_RATE)
     model.compile(optimizer=opt, loss=loss_function, metrics=['accuracy'])
     
@@ -53,7 +53,7 @@ def main():
     
     #plot predictions
     predictions = model.predict(eval_data)
-    figure, axes, rec_events = plot_predictions_cart(predictions, eval_labels, permutation=False)
+    figure, axes, rec_events = plot_predictions_cart(predictions, eval_labels)
     figure.show()
     
     return model, predictions, training

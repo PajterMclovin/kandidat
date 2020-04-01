@@ -131,3 +131,7 @@ XB_mixed_data_1-2_653348.npz
 test_c.npz
 sorted.npz
 sorted_cart.npz
+neural_network.py
+neural_network_cart.py
+*.npz
+neural_network.py

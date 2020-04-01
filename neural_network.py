@@ -18,7 +18,7 @@ from plotting import plot_predictions
 
 ## ----------------------------- PARAMETERS -----------------------------------
 
-NPZ_DATAFILE = 'XB_mixed_data_1-2_653348.npz'   #or import sys and use sys.argv[1]
+NPZ_DATAFILE = 'test.npz'   #or import sys and use sys.argv[1]
 TOTAL_PORTION = 0.3                             #portion of file data to be used, (0,1]
 EVAL_PORTION = 0.1                              #portion of total data for final evalutation (0,1)
 VALIDATION_SPLIT = 0.1                          #portion of training data for epoch validation

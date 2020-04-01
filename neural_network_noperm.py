@@ -23,7 +23,7 @@ EVAL_PORTION = 0.2                              #portion of total data for final
 NO_EPOCHS = 1                                  #Number of times to go through training data
 BATCH_SIZE = 300                                #The training batch size
 LEARNING_RATE = 1e-4                            #Learning rate/step size
-VALIDATION_SPLIT = 0.1                          #??
+
 
 def main():
     #load simulation data. OBS. labels need to be ordered in decreasing energy!
@@ -49,7 +49,7 @@ def main():
     
     #train the model
     training = model.fit(train_data, train_labels, 
-                         epochs=NO_EPOCHS, batch_size=BATCH_SIZE, validation_split=VALIDATION_SPLIT)
+                         epochs=NO_EPOCHS, batch_size=BATCH_SIZE, validation_split=EVAL_PORTION)
     
     #plot predictions
     predictions = model.predict(eval_data)

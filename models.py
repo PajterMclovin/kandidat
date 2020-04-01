@@ -5,7 +5,10 @@
 """
 
 from tensorflow.keras import Model, Input
-from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import Dense, Conv1D, Flatten, Add
+
+import numpy as np
+import tensorflow as tf
 
 
 def FCN(no_inputs, no_outputs, no_layers, no_nodes):
@@ -26,32 +29,62 @@ def FCN(no_inputs, no_outputs, no_layers, no_nodes):
     return Model(inputs, outputs)
 
 
-def CNN(no_inputs, no_outputs, pooling_type):
-    
+def CNN(no_inputs, no_outputs, depth=2, width=8, pooling_type=0):
     """
-        (#filters, kernel size, stride, activation)
-    
+
+    Parameters
+    ----------
+    no_inputs : int
+        number of input nodes.
+    no_outputs : int
+        number of ouput nodes.
+    depth : int, optional
+        depth of FCN-bit. The default is 2.
+    width : int, optional
+        width of FCN-bit. The default is 8.
+    pooling_type : TYPE, optional
+        DESCRIPTION. The default is 0.
+
+    Returns
+    -------
+    TYPE
+        DESCRIPTION.
+
     """
+
     NEIGHBORS_A = 16
     NEIGHBORS_D = 19
     
     A_mat = np.load('conv_mat_A.npy')
     D_mat = np.load('conv_mat_D.npy')
     
-    inputs = Input(shape=(no_inputs,), dtype='int32')
+    inputs = Input(shape=(no_inputs,), dtype='float32')
     
     A_in = tf.matmul(inputs, A_mat)
     D_in = tf.matmul(inputs, D_mat)
+   
+    #A_in = tf.transpose(A_in)
+    #D_in = tf.transpose(D_in)
+   
+    #parameters for conv1D: filters, kernel size, stride, activation
+
+    x_A = Conv1D(16, NEIGHBORS_A, NEIGHBORS_A, activation='relu', input_shape = (no_inputs*NEIGHBORS_A,1))(A_in)
+    x_D = Conv1D(16, NEIGHBORS_D, NEIGHBORS_D, activation='relu', input_shape = (no_inputs*NEIGHBORS_D,1))(D_in)
     
-    x_A = Conv1D(162, NEIGHBORS_A, NEIGHBORS_A, activation='relu')(A_in)
-    x_D = Conv1D(162, NEIGHBORS_D, NEIGHBORS_D, activation='relu')(D_in)
+    x_A = Conv1D(4, 9, 3, activation='relu')(x_A)
+    x_D = Conv1D(4, 9, 3, activation='relu')(x_D)
     
-    x_A = Conv1D(16, 4, 2, activation='relu')(x_A)
-    x_D = Conv1D(16, 4, 2, activation='relu')(x_D)
+    x_A = Flatten(x_A)
+    x_D = Flatten(x_D)
     
-    #behöver mer arbete, trasig
+    FCN_in = Add()([x_A, x_D])
     
-    outputs = 0
+    x = Dense(width, activation='relu')(FCN_in)
+    
+    for i in range(depth-1):
+        x = Dense(width, activation='relu')(x)
+        
+    outputs = Dense(no_outputs, activation='relu')
     
     return Model(inputs, outputs)
 
