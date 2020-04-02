@@ -13,18 +13,22 @@ import numpy as np
 
 from models import FCN
 from loss_functions import loss_function_wrapper
-from utils import load_data, get_eval_data
 from plotting import plot_predictions
+from utils import load_data
+from utils import get_eval_data
+
 
 ## ----------------------------- PARAMETERS -----------------------------------
 
-NPZ_DATAFILE = 'test.npz'   #or import sys and use sys.argv[1]
+NPZ_DATAFILE = 'XB_mixed_data_1-2_653348.npz'   #or import sys and use sys.argv[1]
 TOTAL_PORTION = 0.3                             #portion of file data to be used, (0,1]
 EVAL_PORTION = 0.1                              #portion of total data for final evalutation (0,1)
 VALIDATION_SPLIT = 0.1                          #portion of training data for epoch validation
 CARTESIAN = True                                #train with cartesian coordinates instead of spherical
+CLASSIFICATION = False                          #train with classification nodes
 
-NO_EPOCHS = 1                                   #Number of times to go through training data
+NO_EPOCHS = 1
+                                   #Number of times to go through training data
 BATCH_SIZE = 300                                #The training batch size
 LEARNING_RATE = 1e-4                            #Learning rate/step size
 PERMUTATION = True                              #set false if using an ordered data set
@@ -33,7 +37,9 @@ LOSS_FUNCTION = 'mse'                        #type of loss: {mse, modulo, vector
 
 def main():
     #load simulation data. OBS. labels need to be ordered in decreasing energy!
-    data, labels = load_data(NPZ_DATAFILE, TOTAL_PORTION, cartesian_coordinates=CARTESIAN)
+    data, labels = load_data(NPZ_DATAFILE, TOTAL_PORTION, 
+                             cartesian_coordinates=CARTESIAN,
+                             classification_nodes=CLASSIFICATION)
     
     #detach subset for final evaluation. train_** is for both training and validation
     train_data, train_labels, eval_data, eval_labels = get_eval_data(data, labels,
@@ -47,13 +53,16 @@ def main():
     no_outputs = len(train_labels[0])               
     
     #initiate the network structure
-    model = FCN(no_inputs, no_outputs, 10, 128)
+    model = FCN(no_inputs, no_outputs, 10, 128,
+                cartesian_coordinates=CARTESIAN,
+                classification_nodes=CLASSIFICATION)
     
     #select loss function
-    loss_function = loss_function_wrapper(int(no_outputs/3), 
+    loss_function = loss_function_wrapper(no_outputs, 
                                           loss_type=LOSS_FUNCTION, 
                                           permutation=PERMUTATION,
-                                          cartesian_coordinates=CARTESIAN)
+                                          cartesian_coordinates=CARTESIAN,
+                                          classification_nodes=CLASSIFICATION)
     
     #select optimizer
     opt = Adam(lr=LEARNING_RATE)
@@ -69,14 +78,15 @@ def main():
     
     #plot predictions on evaluation data
     predictions = model.predict(eval_data)
-    figure, axes, rec_events = plot_predictions(predictions, eval_labels, 
-                                                permutation=PERMUTATION,
-                                                cartesian_coordinates=CARTESIAN,
-                                                loss_type=LOSS_FUNCTION)
+    figure, rec_events = plot_predictions(predictions, eval_labels, 
+                                          permutation=PERMUTATION,
+                                          cartesian_coordinates=CARTESIAN,
+                                          loss_type=LOSS_FUNCTION)
     
     
     
-    return model, predictions, training
+    return predictions, model, training, rec_events
 
 if __name__ == '__main__':
-    model, predictions, training = main()
+    predictions, model, training, events = main()
+    
