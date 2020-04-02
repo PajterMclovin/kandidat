@@ -7,9 +7,11 @@
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.colors import LogNorm, LinearSegmentedColormap
+from matplotlib.colors import LogNorm
+from matplotlib.colors import LinearSegmentedColormap
 
-from utils import get_permutation_match, cartesian_to_spherical
+from utils import get_permutation_match
+from utils import cartesian_to_spherical
 
 def truncate_colormap(cmap, minval=0.0, maxval=1.0, n=100):
     new_cmap = LinearSegmentedColormap.from_list(
@@ -17,7 +19,8 @@ def truncate_colormap(cmap, minval=0.0, maxval=1.0, n=100):
         cmap(np.linspace(minval, maxval, n)))
     return new_cmap
 
-def plot_predictions(y, y_, bins=500, permutation=True, cartesian_coordinates=False, loss_type='mse'):
+def plot_predictions(y, y_, bins=500, permutation=True, cartesian_coordinates=False,
+                     loss_type='mse', show_detector_angles=False, show_description=True):
     """
     Use to plot a models predictions in similar format as previous years, i.e. 2d histograms ("lasersvärd")
     
@@ -28,6 +31,8 @@ def plot_predictions(y, y_, bins=500, permutation=True, cartesian_coordinates=Fa
         permutation : True if network used permutational loss, False if not
         cartesian_coordinate : True if network is trained with cartesin coordinates
         loss_type : used to match permutations
+        show_detector_angles : shows points representing the 162 XB detector crystals
+        show_description : adds a descriptive title
     Returns:
         figure, axes, events (dict)
     Raises : if data and labels is not the same length
@@ -40,8 +45,8 @@ def plot_predictions(y, y_, bins=500, permutation=True, cartesian_coordinates=Fa
         y, y_ = get_permutation_match(y, y_, cartesian_coordinates=cartesian_coordinates, loss_type=loss_type)
 
     if cartesian_coordinates:
-        y = cartesian_to_spherical(y)
-        y_ = cartesian_to_spherical(y_)
+        y = cartesian_to_spherical(y, predictions=True)
+        y_ = cartesian_to_spherical(y_, predictions=False)
                 
     events = {'predicted_energy': y[::,0::3].flatten(),
               'correct_energy': y_[::,0::3].flatten(), 
@@ -69,6 +74,11 @@ def plot_predictions(y, y_, bins=500, permutation=True, cartesian_coordinates=Fa
     for i in range(0,3):
         axs[i].plot(line,line, color=line_color, linewidth = 2, linestyle = '-.')
 
+    if show_detector_angles:
+        detector_theta, detector_phi = get_detector_angles()
+        axs[1].scatter(detector_theta, detector_theta, marker='x')
+        axs[2].scatter(detector_phi, detector_phi, marker='x')
+    
     text_size = 17
     axs[0].set_xlabel('Correct E [MeV]', fontsize = text_size)
     axs[1].set_xlabel('Correct \u03F4', fontsize = text_size)
@@ -117,7 +127,7 @@ def plot_predictions(y, y_, bins=500, permutation=True, cartesian_coordinates=Fa
     plt.yticks(np.linspace(0, 2*np.pi, 3),['0','$\pi$','$2\pi$'])
     
     fig.tight_layout()
-    return fig, axs, events
+    return fig, events
 
 
 def plot_accuracy(history):
@@ -184,4 +194,16 @@ def plot_energy_distribution(data, bins=100, with_zeros=True):
         energy = np.setdiff1d(energy,[0])
     plt.hist(energy, bins, facecolor='blue', alpha=0.5)
     plt.show()
+    
+def get_detector_angles():
+    with open('geom_xb.txt') as f:
+        lines = f.readlines()
+        
+    theta, phi = np.zeros((162,)), np.zeros((162,))
+    lines = [line.strip() for line in lines]
+    for i in range(162):
+        s = lines[i].split(',')
+        theta[i] = float(s[2])
+        phi[i] =  float(s[3])
+    return theta*np.pi/180, (phi+180)*np.pi/180
     
