@@ -101,7 +101,8 @@ def permutation_loss(y, y_, loss_type, permutation_tensor, identity_tensor,
     return K.mean(K.min(K.sum(loss, axis=2), axis=0))
 
 
-def non_permutation_loss(y, y_, loss_type):
+def non_permutation_loss(y, y_, loss_type, cartesian_coordinates=False,
+                     classification_nodes=False, shift_tensor=False):
     """
     Loss functions trained with an ordered label set and does not check every
     permutation.
@@ -111,7 +112,8 @@ def non_permutation_loss(y, y_, loss_type):
     y = K.expand_dims(y, axis=0)
     y_ = K.expand_dims(y_, axis=0)
     
-    loss = Loss_function(loss_type).loss(y, y_)
+    loss = Loss_function(loss_type, cartesian_coordinates=cartesian_coordinates,
+                         classification_nodes=classification_nodes).loss(y, y_)
     return K.mean(K.sum(loss, axis=1))
 
 
@@ -125,8 +127,7 @@ class Loss_function(object):
         self.cartesian_coordinates = cartesian_coordinates
         
         if classification_nodes:
-            #self.loss = self.loss_with_binary_cross_entropy
-            pass
+            self.loss = self.loss_with_binary_cross_entropy
         else:
             self.loss = self.get_loss_type()
         if not self.loss:
