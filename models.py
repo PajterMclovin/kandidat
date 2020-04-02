@@ -10,23 +10,39 @@ from tensorflow.keras.layers import Dense, Conv1D, Flatten, Add
 import numpy as np
 import tensorflow as tf
 
-
-def FCN(no_inputs, no_outputs, no_layers, no_nodes):
+def FCN(no_inputs, no_outputs, no_layers, no_nodes,
+        cartesian_coordinates=False, classification_nodes=False):
     """
     Args:
         no_inputs  : number of input nodes
         no_outputs : number of ouput nodes
         no_layers  : number of fully-connected layers
         no_nodes   : number of nodes in each layer
+        cartesian_coordinates : matters only with classification nodes
+        classifcation_nodes : True if training with classification nodes
     Returns:
         fully-connected neural network as tensorflow.keras.Model object
     """
     inputs = Input(shape=(no_inputs,), dtype='float32')
     x = Dense(no_nodes, activation='relu')(inputs)
-    for i in range(no_layers):
+    for i in range(no_layers-2):
         x = Dense(no_nodes, activation='relu')(x)
-    outputs = Dense(no_outputs, activation='relu')(x)
+        
+    if classification_nodes:
+        no_classifications = int(no_outputs/3)
+        if cartesian_coordinates:
+            no_classifications = int(no_outputs/4)
+        no_regression = no_outputs-no_classifications
+        
+        output1 = Dense(no_regression, activation='linear')(x)                 #for regression
+        output2 = Dense(no_classifications, activation='sigmoid')(x)           #for classification
+        outputs = Concatenate(axis=1)([output1, output2])
+        
+    else:
+        outputs = Dense(no_outputs, activation='linear')(x)
+        
     return Model(inputs, outputs)
+
 
 
 def CNN(no_inputs, no_outputs, depth=2, width=8, pooling_type=0):
