@@ -7,15 +7,15 @@
 import numpy as np
 from tensorflow.keras import layers
 from tensorflow.keras import backend as K
-from itertools import permutations
 from random import shuffle
 
 from loss_functions import Loss_function
-from loss_functions import get_identity_tensor
-from loss_functions import get_permutation_tensor
+from transformations import get_identity_tensor
+from transformations import get_permutation_tensor
 from tensorflow import transpose
 
-def load_data(npz_file_name, total_portion, cartesian_coordinates=False):
+def load_data(npz_file_name, total_portion, 
+              cartesian_coordinates=False, classification_nodes=False):
     """
     Reads a .npz-file containing simulation data in spherical coordinates and
     returns data/labels in spherical or cartesian coordinates in numpy arrays
@@ -24,6 +24,7 @@ def load_data(npz_file_name, total_portion, cartesian_coordinates=False):
         npz_file_name : address string to .npz-file
         total_portion : the actual amount of total data to be used
         cartesian_coordinates : set True for cartesian coordinates
+        classification_nodes : set True to train with classification nodes
     Returns:
         all data and labels in spherical (or cartesian) coordinates
     Raises:
@@ -38,11 +39,35 @@ def load_data(npz_file_name, total_portion, cartesian_coordinates=False):
     if cartesian_coordinates:
         print('Transforming to cartesian coordinates')
         labels = spherical_to_cartesian(labels)
+    if classification_nodes:
+        print('Inserting classification nodes in labels')
+        labels = insert_classification_labels(labels, cartesian_coordinates=cartesian_coordinates)
     no_events = int(len(labels)*total_portion)
     print('Using {} simulated events in total.'.format(no_events))
     return det_data[:no_events], labels[:no_events]
 
 
+def insert_classification_labels(labels, cartesian_coordinates=False):
+    """
+    Inserts binary classification labels for each event as:
+        energy==0 => mu=1
+        energy >0 => mu=0
+    """
+    m = 3
+    if cartesian_coordinates:
+        m = 4
+    energy = labels[::,0::m]
+    pos = labels[::,[i for i in range(len(labels[0])) if np.mod(i,m)!=0]]
+    mu = (energy!=0)*1
+    print(len(mu))
+    max_mult = int(len(labels[0])/m)
+    new_labels = np.zeros((len(labels), max_mult*(m+1)))
+    new_labels[::,0::m+1] = mu
+    new_labels[::,1::m+1] = energy
+    new_labels[::,[i for i in range(len(labels[0])+max_mult) if np.mod(i,m+1)!=0 and np.mod(i-1,m+1)!=0]]=pos
+    return new_labels
+    
+    
 def get_eval_data(data, labels, eval_portion=0.1):
     """
     Detach final evaluation data.
@@ -132,7 +157,7 @@ def get_permutation_match(y, y_, cartesian_coordinates=False, loss_type='mse'):
     
     print('Matching predicted data with correct label permutation. May take a while...')
     for i in range(len(y_)):
-        y_[i,::] = Y_[permutation_indices[i],i,::]    
+        y_[i,::] = Y_[permutation_indices[i],i,::]    #optimize this...
     return y, y_
 
 
@@ -160,10 +185,10 @@ def spherical_to_cartesian(spherical_labels):
     return cartesian_labels
     
 
-def cartesian_to_spherical(cartesian_labels):
+def cartesian_to_spherical(cartesian_labels, predictions=True):
     """
     Coordinate transform (x,y,z) --> (theta, phi). Used for labels and predictions
-    after training
+    after training.
 
     """
     max_mult = int(len(cartesian_labels[0])/4)
@@ -174,15 +199,27 @@ def cartesian_to_spherical(cartesian_labels):
     y = cartesian_labels[::,2::4]
     z = cartesian_labels[::,3::4]
     r = np.sqrt(x*x+y*y+z*z)
-    print(np.min(r))
     
-    theta = np.arccos(z/r)
-    phi = np.arctan2(y,x)
+    get_theta = lambda z,r: np.arccos(np.divide(z,r))
+    get_phi = lambda y,x: np.arctan2(y,x)
     
+    if predictions:
+        tol = 1e-3
+        theta = np.where(r<tol, 0, get_theta(z,r))
+        phi = np.where(r<tol, 0, get_phi(y,x))
+        energy = np.where(r<tol, -2, energy)
+        print('r<0.001 count: ' + str((r<1e-3).sum()))
+        print('r<0.01 count: ' + str((r<1e-2).sum()))
+        print('r<0.1 count: ' + str((r<1e-1).sum()))
+    else:
+        theta = get_theta(z,r)
+        phi = get_phi(y,x)
+
     spherical_labels[::,0::3] = energy
     spherical_labels[::,1::3] = theta
     spherical_labels[::,2::3] = np.mod(phi, 2*np.pi)
     return spherical_labels
+   
     
 ### ----------------------------- INSPIRATION ---------------------------------
     
