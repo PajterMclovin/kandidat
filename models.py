@@ -5,7 +5,7 @@
 """
 
 from tensorflow.keras import Model, Input
-from tensorflow.keras.layers import Dense, Conv1D, Flatten, Add
+from tensorflow.keras.layers import Dense, Conv1D, Flatten, Concatenate
 
 import numpy as np
 import tensorflow as tf
@@ -78,29 +78,34 @@ def CNN(no_inputs, no_outputs, depth=2, width=8, pooling_type=0):
     
     A_in = tf.matmul(inputs, A_mat)
     D_in = tf.matmul(inputs, D_mat)
-   
-    #A_in = tf.transpose(A_in)
-    #D_in = tf.transpose(D_in)
+    
+    #(batch, steps, channels)
+    
+    A_in = tf.reshape(A_in, [-1, 2592, 1])
+    D_in = tf.reshape(D_in, [-1, 3078, 1])
    
     #parameters for conv1D: filters, kernel size, stride, activation
 
-    x_A = Conv1D(16, NEIGHBORS_A, NEIGHBORS_A, activation='relu', input_shape = (no_inputs*NEIGHBORS_A,1))(A_in)
-    x_D = Conv1D(16, NEIGHBORS_D, NEIGHBORS_D, activation='relu', input_shape = (no_inputs*NEIGHBORS_D,1))(D_in)
+    x_A = Conv1D(8, NEIGHBORS_A, NEIGHBORS_A, activation='relu', 
+                 input_shape = (None, no_inputs*NEIGHBORS_A, 1), data_format = "channels_last" )(A_in)
+    
+    x_D = Conv1D(8, NEIGHBORS_D, NEIGHBORS_D, activation='relu', 
+                 input_shape = (None, no_inputs*NEIGHBORS_D, 1), data_format = "channels_last" )(D_in)
     
     x_A = Conv1D(4, 9, 3, activation='relu')(x_A)
     x_D = Conv1D(4, 9, 3, activation='relu')(x_D)
     
-    x_A = Flatten(x_A)
-    x_D = Flatten(x_D)
+    x_A = Flatten()(x_A)
+    x_D = Flatten()(x_D)
     
-    FCN_in = Add()([x_A, x_D])
+    FCN_in = Concatenate(axis=1)([x_A, x_D])
     
     x = Dense(width, activation='relu')(FCN_in)
     
     for i in range(depth-1):
         x = Dense(width, activation='relu')(x)
         
-    outputs = Dense(no_outputs, activation='relu')
+    outputs = Dense(no_outputs, activation='relu')(x)
     
     return Model(inputs, outputs)
 

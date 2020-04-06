@@ -11,7 +11,7 @@ import h5py
 
 import numpy as np
 
-from models import CNN
+from models import CNN, FCN
 from loss_functions import loss_function_wrapper
 from utils import load_data, get_eval_data
 from plotting import plot_predictions
@@ -22,12 +22,12 @@ NPZ_DATAFILE = 'test.npz'   #or import sys and use sys.argv[1]
 TOTAL_PORTION = 0.3                             #portion of file data to be used, (0,1]
 EVAL_PORTION = 0.1                              #portion of total data for final evalutation (0,1)
 VALIDATION_SPLIT = 0.1                          #portion of training data for epoch validation
-CARTESIAN = True                                #train with cartesian coordinates instead of spherical
+CARTESIAN = False                                #train with cartesian coordinates instead of spherical
 
 NO_EPOCHS = 1                                   #Number of times to go through training data
-BATCH_SIZE = 300                                #The training batch size
+BATCH_SIZE = 256                                #The training batch size
 LEARNING_RATE = 1e-4                            #Learning rate/step size
-PERMUTATION = True                              #set false if using an ordered data set
+PERMUTATION = False                              #set false if using an ordered data set
 LOSS_FUNCTION = 'mse'                        #type of loss: {mse, modulo, vector, cosine}
 
 
@@ -61,7 +61,7 @@ def main():
     #compile the network
     model.compile(optimizer=opt, loss=loss_function, metrics=['accuracy'])
     model.summary()
-    """
+   
     
     #train the network with training data
     training = model.fit(train_data, train_labels, 
@@ -70,11 +70,8 @@ def main():
     
     #plot predictions on evaluation data
     predictions = model.predict(eval_data)
-    figure, axes, rec_events = plot_predictions(predictions, eval_labels, 
-                                                permutation=PERMUTATION,
-                                                cartesian_coordinates=CARTESIAN,
-                                                loss_type=LOSS_FUNCTION)
-    """
+    figure, axes, rec_events = plot_predictions(predictions, eval_labels, permutation=False)
+    
     
     
     return model#, predictions, training
