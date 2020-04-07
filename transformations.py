@@ -45,3 +45,22 @@ def get_shift_tensor(n, m=3):
         shift_tensor[(m-1)*i:(m-1)*(i+1):, m*i+1:m*(i+1):] = np.identity(m-1)
     return K.constant(shift_tensor)
     
+def get_adjacency_matrix():
+    """
+    Returns the adjacency matrix of the graph described in geom_xb.txt as 
+    tensorflow backend tensor.
+    """
+    adj = np.zeros((162,162), dtype=int)
+    with open('geom_xb.txt') as f:
+        lines = f.readlines()
+    lines = [line.strip() for line in lines]
+    for i in range(162):
+        s = lines[i].split(',')
+        for j in range(6):
+            n = int(s[5+j].split(')')[0])-1
+            if n!=-1:
+                adj[i,n] = 1
+    return adj
+
+
+
