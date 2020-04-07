@@ -5,13 +5,15 @@
 """
 
 from tensorflow.keras import Model, Input
-from tensorflow.keras.layers import Dense, Conv1D, Flatten, Concatenate
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import Concatenate
+import tensorflow.keras.backend as K
 
-import numpy as np
-import tensorflow as tf
+from layers import GraphConv
+from transformations import get_adjacency_matrix
 
 def FCN(no_inputs, no_outputs, no_layers, no_nodes,
-        cartesian_coordinates=False, classification_nodes=False):
+        cartesian=False, classification=False):
     """
     Args:
         no_inputs  : number of input nodes
@@ -28,12 +30,10 @@ def FCN(no_inputs, no_outputs, no_layers, no_nodes,
     for i in range(no_layers-2):
         x = Dense(no_nodes, activation='relu')(x)
         
-    if classification_nodes:
-        no_classifications = int(no_outputs/3)
-        if cartesian_coordinates:
-            no_classifications = int(no_outputs/4)
+    if classification:
+        no_classifications = int(no_outputs/4)
         no_regression = no_outputs-no_classifications
-        
+    
         output1 = Dense(no_regression, activation='linear')(x)                 #for regression
         output2 = Dense(no_classifications, activation='sigmoid')(x)           #for classification
         outputs = Concatenate(axis=1)([output1, output2])
@@ -42,6 +42,26 @@ def FCN(no_inputs, no_outputs, no_layers, no_nodes,
         outputs = Dense(no_outputs, activation='linear')(x)
         
     return Model(inputs, outputs)
+
+
+
+def GCN(no_inputs, no_outputs, no_layers, no_nodes):
+    
+    inputs = Input(shape=(no_inputs,), dtype='float32')
+    
+    x = GraphConv(no_inputs, activation='relu')(inputs)
+    x = GraphConv(no_inputs, activation='relu')(x)
+    
+    x = Dense(no_nodes, activation='relu')(inputs)
+    for i in range(no_layers-2):
+        x = Dense(no_nodes, activation='relu')(x)
+    
+    outputs = Dense(no_outputs, activation='linear')(x)
+    return Model(inputs, outputs)
+
+
+
+    
 
 
 
