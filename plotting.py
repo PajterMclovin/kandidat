@@ -10,8 +10,8 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 from matplotlib.colors import LinearSegmentedColormap
 
-from utils import get_permutation_match
-from utils import cartesian_to_spherical
+from utils import get_detector_angles
+
 
 def truncate_colormap(cmap, minval=0.0, maxval=1.0, n=100):
     new_cmap = LinearSegmentedColormap.from_list(
@@ -19,8 +19,7 @@ def truncate_colormap(cmap, minval=0.0, maxval=1.0, n=100):
         cmap(np.linspace(minval, maxval, n)))
     return new_cmap
 
-def plot_predictions(y, y_, bins=500, permutation=True, cartesian_coordinates=False,
-                     loss_type='mse', show_detector_angles=False, show_description=True):
+def plot_predictions(y, y_, bins=500, show_detector_angles=False):
     """
     Use to plot a models predictions in similar format as previous years, i.e. 2d histograms ("lasersvärd")
     
@@ -40,14 +39,7 @@ def plot_predictions(y, y_, bins=500, permutation=True, cartesian_coordinates=Fa
     """
     if not len(y)==len(y_):
         raise TypeError('The prediction must be of same length as labels.') 
-      
-    if permutation:
-        y, y_ = get_permutation_match(y, y_, cartesian_coordinates=cartesian_coordinates, loss_type=loss_type)
-
-    if cartesian_coordinates:
-        y = cartesian_to_spherical(y, predictions=True)
-        y_ = cartesian_to_spherical(y_, predictions=False)
-                
+                      
     events = {'predicted_energy': y[::,0::3].flatten(),
               'correct_energy': y_[::,0::3].flatten(), 
               
@@ -58,12 +50,12 @@ def plot_predictions(y, y_, bins=500, permutation=True, cartesian_coordinates=Fa
               'correct_phi': y_[::,2::3].flatten()}
     
     
-    fig, axs = plt.subplots(1,3, figsize=(13, 5))
+    fig, axs = plt.subplots(1,3, figsize=(20, 8))
     colormap = truncate_colormap(plt.cm.afmhot, 0.0, 1.0)
     img = []
-    img.append(axs[0].hist2d(events['correct_energy'], events['predicted_energy'], bins=bins, norm=LogNorm(), cmap=colormap, cmax = 1001))
-    img.append(axs[1].hist2d(events['correct_theta'], events['predicted_theta'], bins=bins, norm=LogNorm(), cmap=colormap, cmax = 1001))
-    img.append(axs[2].hist2d(events['correct_phi'], events['predicted_phi'], bins=bins, norm=LogNorm(), cmap=colormap, cmax = 1001))
+    img.append(axs[0].hist2d(events['correct_energy'], events['predicted_energy'],cmap=colormap, bins=bins, norm=LogNorm()))
+    img.append(axs[1].hist2d(events['correct_theta'], events['predicted_theta'], cmap=colormap, bins=bins, norm=LogNorm()))
+    img.append(axs[2].hist2d(events['correct_phi'], events['predicted_phi'], cmap=colormap, bins=bins, norm=LogNorm()))
     
     max_energy = 10
     max_theta = np.pi
@@ -99,9 +91,9 @@ def plot_predictions(y, y_, bins=500, permutation=True, cartesian_coordinates=Fa
     axs[2].set_aspect('equal', 'box')
 
     cb1 = fig.colorbar(img[0][3], ax = axs[0], fraction=0.046, pad = 0.04)
-    fig.delaxes(cb1.ax)
+    # fig.delaxes(cb1.ax)
     cb2 = fig.colorbar(img[1][3], ax = axs[1], fraction=0.046, pad = 0.04)
-    fig.delaxes(cb2.ax)
+    # fig.delaxes(cb2.ax)
     cb3 = fig.colorbar(img[2][3], ax = axs[2], fraction=0.046, pad=0.04)
 
     cb1.ax.tick_params(labelsize = text_size)
@@ -117,8 +109,6 @@ def plot_predictions(y, y_, bins=500, permutation=True, cartesian_coordinates=Fa
     plt.yticks(np.linspace(0, 10, 6),['0','2','4','6','8','10'])
     
     plt.sca(axs[1])
-    title = 'loss: {}, permutation: {}, cartesian: {}'.format(loss_type, permutation, cartesian_coordinates)
-    plt.title(title)
     plt.xticks(np.linspace(0, np.pi, 3),['0','$\pi/2$','$\pi$'])
     plt.yticks(np.linspace(0, np.pi, 3),['0','$\pi/2$','$\pi$'])
     
@@ -128,27 +118,6 @@ def plot_predictions(y, y_, bins=500, permutation=True, cartesian_coordinates=Fa
     
     fig.tight_layout()
     return fig, events
-
-
-def plot_accuracy(history):
-    """
-    Learning curve; plot training and validation ACCURACY from model history
-    
-    Args:
-        history : tf.keras.callbacks.History object returned from model.fit
-    Returns:
-        -
-    Raises:
-        TypeError : if history is not History object
-    """
-    if not isinstance(history, tf.keras.callbacks.History):
-        raise TypeError('history must of type tf.keras.callbacks.History')
-    plt.plot(history.history['accuracy'])
-    plt.plot(history.history['val_accuracy'])
-    plt.title('model accuracy')
-    plt.ylabel('accuracy')
-    plt.xlabel('epoch')
-    plt.legend(['train', 'val'], loc='upper left')
 
 
 def plot_loss(history):
@@ -164,12 +133,16 @@ def plot_loss(history):
     """
     if not isinstance(history, tf.keras.callbacks.History):
         raise TypeError('history must of type tf.keras.callbacks.History')
+        
+    fig, axs = plt.subplots()
     plt.plot(history.history['loss'])
     plt.plot(history.history['val_loss'])
-    plt.title('model accuracy')
-    plt.ylabel('accuracy')
+    plt.title('model loss')
+    plt.ylabel('loss')
     plt.xlabel('epoch')
-    plt.legend(['train', 'val'], loc='upper left')
+    plt.legend(['train', 'val'], loc='upper right')
+    plt.grid()
+    return fig
 
 
 def plot_energy_distribution(data, bins=100, with_zeros=True):
@@ -195,15 +168,5 @@ def plot_energy_distribution(data, bins=100, with_zeros=True):
     plt.hist(energy, bins, facecolor='blue', alpha=0.5)
     plt.show()
     
-def get_detector_angles():
-    with open('geom_xb.txt') as f:
-        lines = f.readlines()
-        
-    theta, phi = np.zeros((162,)), np.zeros((162,))
-    lines = [line.strip() for line in lines]
-    for i in range(162):
-        s = lines[i].split(',')
-        theta[i] = float(s[2])
-        phi[i] =  float(s[3])
-    return theta*np.pi/180, (phi+180)*np.pi/180
-    
+
+   
