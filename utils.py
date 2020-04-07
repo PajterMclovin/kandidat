@@ -2,20 +2,43 @@
 
     Help methods used in neural_network.py
     
-
 """
+import os
+import csv
 import numpy as np
+import tensorflow as tf
 from tensorflow.keras import layers
 from tensorflow.keras import backend as K
 from random import shuffle
+from tensorflow import transpose
 
 from loss_functions import Loss_function
 from transformations import get_identity_tensor
 from transformations import get_permutation_tensor
-from tensorflow import transpose
+
+
+def save(folder, figure, learning_curve, model):
+    folder0 = folder
+    folder_name_taken = True
+    n = 0
+    while folder_name_taken:
+        n += 1
+        try:
+            os.makedirs(folder)
+            folder_name_taken = False
+        except FileExistsError:
+            folder = folder0 + str(n)
+        if n==20: 
+            raise ValueError('change name!')
+    folder = folder+'/'
+    figure.savefig(folder + 'event_reconstruction.png', format='png')
+    # figure.savefig(folder + 'event_reconstruction.eps', format='eps')
+    learning_curve.savefig(folder + 'training_curve.png', format='png')
+    model.save_weights(folder + 'weights.h5')
+
 
 def load_data(npz_file_name, total_portion, 
-              cartesian_coordinates=False, classification_nodes=False):
+              cartesian=False, classification=False):
     """
     Reads a .npz-file containing simulation data in spherical coordinates and
     returns data/labels in spherical or cartesian coordinates in numpy arrays
@@ -32,30 +55,25 @@ def load_data(npz_file_name, total_portion,
     """
     if not total_portion > 0 and total_portion <= 1:
         raise ValueError('total_portion must be in the interval (0,1].')
-    print('Reading data...')
     data_set = np.load(npz_file_name)
     det_data = data_set['detector_data']
     labels = data_set['energy_labels']
-    if cartesian_coordinates:
-        print('Transforming to cartesian coordinates')
+    if cartesian:
         labels = spherical_to_cartesian(labels)
-    if classification_nodes:
-        print('Inserting classification nodes in labels')
-        labels = insert_classification_labels(labels, cartesian_coordinates=cartesian_coordinates)
+    if classification:
+        labels = insert_classification_labels(labels, cartesian=cartesian)
     no_events = int(len(labels)*total_portion)
-    print('Using {} simulated events in total.'.format(no_events))
+    print('Using {} events from {}'.format(no_events, npz_file_name))
     return det_data[:no_events], labels[:no_events]
 
 
-def insert_classification_labels(labels, cartesian_coordinates=False):
+def insert_classification_labels(labels, cartesian=False):
     """
     Inserts binary classification labels for each event as:
         energy==0 => mu=1
         energy >0 => mu=0
     """
-    m = 3
-    if cartesian_coordinates:
-        m = 4
+    m = 3 + cartesian
     energy = labels[::,0::m]
     pos = labels[::,[i for i in range(len(labels[0])) if np.mod(i,m)!=0]]
     mu = (energy!=0)*1
@@ -135,24 +153,21 @@ def add_empty_events(old_npz, new_npz, n):
     
 
 
-def get_permutation_match(y, y_, cartesian_coordinates=False, loss_type='mse'):
+def get_permutation_match(y, y_, cartesian, loss_type='mse'):
     """
     Sorts the predictions with corresponding label as the minimum of a square 
     error loss function. Must be used BEFORE plotting the "lasersvärd".
 
     """
-    m = 3
-    if cartesian_coordinates: 
-        m = 4
-    max_mult = int(len(y_[0])/m)
-    permutation_tensor = get_permutation_tensor(max_mult, m=m)
-    identity_tensor = get_identity_tensor(max_mult, m=m)
+    max_mult = int(len(y_[0])/3)
+    permutation_tensor = get_permutation_tensor(max_mult, m=3)
+    identity_tensor = get_identity_tensor(max_mult, m=3)
     
     #get all possible combinations
     Y_ = transpose(K.dot(K.variable(y_), permutation_tensor), perm=[1,0,2])
     Y = transpose(K.dot(K.variable(y), identity_tensor), perm=[1,0,2])
     
-    loss_function = Loss_function(loss_type, cartesian_coordinates=cartesian_coordinates)
+    loss_function = Loss_function(loss_type, cartesian=cartesian)
     permutation_indices = K.argmin(K.sum(loss_function.loss(Y, Y_), axis=2), axis=0)
     
     print('Matching predicted data with correct label permutation. May take a while...')
@@ -161,66 +176,81 @@ def get_permutation_match(y, y_, cartesian_coordinates=False, loss_type='mse'):
     return y, y_
 
 
-
-def spherical_to_cartesian(spherical_labels):
+def spherical_to_cartesian(spherical):
     """
-    Coordinate transform (theta, phi) --> (x,y,z). Used for labels before training
+    Coordinate transform (energy, theta, phi) --> (px, py, pz)
     
     """
-    max_mult = int(len(spherical_labels[0])/3)
-    cartesian_labels = np.zeros([len(spherical_labels), 4*max_mult])
-    energy = spherical_labels[::,0::3]
+    energy = spherical[::,0::3]
+    theta = spherical[::,1::3]
+    phi = spherical[::,2::3]
+
+    px = np.sin(theta)*np.cos(phi)*energy    
+    py = np.sin(theta)*np.sin(phi)*energy
+    pz = np.cos(theta)*energy
     
-    theta = spherical_labels[::,1::3]
-    phi = spherical_labels[::,2::3]
+    cartesian = np.zeros(np.shape(spherical))
+    cartesian[::,0::3] = px
+    cartesian[::,1::3] = py
+    cartesian[::,2::3] = pz
+    return cartesian
 
-    x = np.sin(theta)*np.cos(phi)    
-    y = np.sin(theta)*np.sin(phi)
-    z = np.cos(theta)
-
-    cartesian_labels[::, 0::4] = energy
-    cartesian_labels[::, 1::4] = x
-    cartesian_labels[::, 2::4] = y
-    cartesian_labels[::, 3::4] = z
-    return cartesian_labels
-    
-
-def cartesian_to_spherical(cartesian_labels, predictions=True):
+def cartesian_to_spherical(cartesian, error=False):
     """
-    Coordinate transform (x,y,z) --> (theta, phi). Used for labels and predictions
-    after training.
+    Coordinate transform (px, py, pz) --> (energy, theta, phi). Used for labels 
+    and predictions after training.
 
     """
-    max_mult = int(len(cartesian_labels[0])/4)
-    spherical_labels = np.zeros([len(cartesian_labels), 3*max_mult])
-    energy = cartesian_labels[::,0::4]
+    px = cartesian[::,0::3]
+    py = cartesian[::,1::3]
+    pz = cartesian[::,2::3]
+    energy = np.sqrt(px*px + py*py + pz*pz)
     
-    x = cartesian_labels[::,1::4]
-    y = cartesian_labels[::,2::4]
-    z = cartesian_labels[::,3::4]
-    r = np.sqrt(x*x+y*y+z*z)
-    
-    get_theta = lambda z,r: np.arccos(np.divide(z,r))
+    tol = 1e-3
+    get_theta = lambda z,r: np.arccos(np.divide(z, r, out=np.ones_like(z), where=r>tol))
     get_phi = lambda y,x: np.arctan2(y,x)
     
-    if predictions:
-        tol = 1e-3
-        theta = np.where(r<tol, 0, get_theta(z,r))
-        phi = np.where(r<tol, 0, get_phi(y,x))
-        energy = np.where(r<tol, -2, energy)
-        print('r<0.001 count: ' + str((r<1e-3).sum()))
-        print('r<0.01 count: ' + str((r<1e-2).sum()))
-        print('r<0.1 count: ' + str((r<1e-1).sum()))
+    if error:
+        zero_to_random = 0
     else:
-        theta = get_theta(z,r)
-        phi = get_phi(y,x)
-
-    spherical_labels[::,0::3] = energy
-    spherical_labels[::,1::3] = theta
-    spherical_labels[::,2::3] = np.mod(phi, 2*np.pi)
-    return spherical_labels
-   
+        zero_to_random = np.random.uniform(low=-1.0, high=-.5, size=np.shape(energy))
     
+    theta = np.where(energy <tol , 0, get_theta(pz, energy))
+    phi = np.where(energy <tol , 0, get_phi(py, px))
+    energy = np.where(energy <tol , zero_to_random, energy)
+    
+    spherical = np.zeros(np.shape(cartesian))
+    spherical[::,0::3] = energy
+    spherical[::,1::3] = theta
+    spherical[::,2::3] = np.mod(phi, 2*np.pi)
+    return spherical
+
+def get_detector_angles():
+    """
+    Returns the angles (theta, phi) for each of 162 crystall detectors.
+    
+    """
+    with open('geom_xb.txt') as f:
+        lines = f.readlines()
+        
+    theta, phi = np.zeros((162,)), np.zeros((162,))
+    lines = [line.strip() for line in lines]
+    for i in range(162):
+        s = lines[i].split(',')
+        theta[i] = float(s[2])
+        phi[i] =  float(s[3])
+    return theta*np.pi/180, (phi+180)*np.pi/180
+    
+
+def get_no_trainable_parameters(compiled_model):
+    """
+    Returns the no. trainable parameters of given compiled model.
+    
+    """
+    assert isinstance(compiled_model, tf.keras.Model)
+    return np.sum([K.count_params(w) for w in compiled_model.trainable_weights])
+
+
 ### ----------------------------- INSPIRATION ---------------------------------
     
 #Need custom conv-Layer or some other solution before we can implement ResNet. BatchNorm is easy to implement!
