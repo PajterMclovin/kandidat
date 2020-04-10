@@ -91,6 +91,8 @@ def CNN(no_inputs, no_outputs, depth=2, width=8, pooling_type=0):
     NEIGHBORS_A = 16
     NEIGHBORS_D = 19
     
+    print("Shaping inputs...")
+    
     A_mat = np.load('conv_mat_A.npy')
     D_mat = np.load('conv_mat_D.npy')
     
@@ -99,10 +101,10 @@ def CNN(no_inputs, no_outputs, depth=2, width=8, pooling_type=0):
     A_in = tf.matmul(inputs, A_mat)
     D_in = tf.matmul(inputs, D_mat)
     
-    #(batch, steps, channels)
+    #reshapes the input to [batch, steps, channels]
     
-    A_in = tf.reshape(A_in, [-1, 2592, 1])
-    D_in = tf.reshape(D_in, [-1, 3078, 1])
+    A_in = tf.reshape(A_in, [-1, no_inputs*NEIGHBORS_A, 1])
+    D_in = tf.reshape(D_in, [-1, no_inputs*NEIGHBORS_D, 1])
    
     #parameters for conv1D: filters, kernel size, stride, activation
 
@@ -125,7 +127,7 @@ def CNN(no_inputs, no_outputs, depth=2, width=8, pooling_type=0):
     for i in range(depth-1):
         x = Dense(width, activation='relu')(x)
         
-    outputs = Dense(no_outputs, activation='relu')(x)
+    outputs = Dense(no_outputs, activation='linear')(x)
     
     return Model(inputs, outputs)
 
