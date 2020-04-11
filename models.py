@@ -5,9 +5,13 @@
 """
 
 from tensorflow.keras import Model, Input
-from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import Dense, Conv1D, Flatten
 from tensorflow.keras.layers import Concatenate
 import tensorflow.keras.backend as K
+
+import tensorflow as tf
+import numpy as np
+
 
 from layers import GraphConv
 from transformations import get_adjacency_matrix
