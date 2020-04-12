@@ -62,5 +62,14 @@ def get_adjacency_matrix():
                 adj[i,n] = 1
     return adj
 
-
+def reduce_colums(m):
+    """
+    Returns a matrix containing the non-zero columns of the input matrix
+    """
+    s = np.sum(m, axis=0)
+    c = np.array(np.nonzero(s))
+    c = c[0,:]
+    m_prime = m[:,c]
+    
+    return m_prime
 
