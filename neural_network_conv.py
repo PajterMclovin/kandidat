@@ -108,3 +108,7 @@ def main():
     
     save('/home/david/', figure, learning_curve, model)
     
+    return
+
+if __name__ == '__main__':
+    main()
