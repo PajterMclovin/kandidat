@@ -7,6 +7,8 @@
 
 from tensorflow.keras.optimizers import Adam
 
+import sys
+
 from models import CNN
 from loss_functions import loss_function_wrapper
 from plotting import plot_predictions
