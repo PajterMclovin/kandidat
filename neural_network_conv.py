@@ -108,7 +108,3 @@ def main():
     
     save('/home/david/', figure, learning_curve, model)
     
-    return model
-
-if __name__ == '__main__':
-    model, predictions, training = main()
