@@ -7,7 +7,7 @@
 
 from tensorflow.keras.optimizers import Adam
 
-from models import FCN, GCN, CNN
+from models import CNN
 from loss_functions import loss_function_wrapper
 from plotting import plot_predictions
 from plotting import plot_loss
@@ -21,13 +21,13 @@ from utils import get_no_trainable_parameters
 ## ----------------------------- PARAMETERS -----------------------------------
 
 NPZ_DATAFILE = 'test.npz'                        #or import sys and use sys.argv[1]
-TOTAL_PORTION = 0.5                          #portion of file data to be used, (0,1]
+TOTAL_PORTION = 1                          #portion of file data to be used, (0,1]
 EVAL_PORTION = 0.1                              #portion of total data for final evalutation (0,1)
 VALIDATION_SPLIT = 0.1                          #portion of training data for epoch validation
 CARTESIAN = True                                #train with cartesian coordinates instead of spherical
 CLASSIFICATION = False                          #train with classification nodes
 
-NO_EPOCHS = 20
+NO_EPOCHS = 50
                                    #Number of times to go through training data
 BATCH_SIZE = 2**8                                #The training batch size
 LEARNING_RATE = 1e-4                            #Learning rate/step size
@@ -106,9 +106,9 @@ def main():
                        len(train_data), len(eval_data))
     figure.suptitle(title)
     
+    save('/home/david/', figure, learning_curve, model)
     
-    
-    return model#, predictions, training
+    return model
 
 if __name__ == '__main__':
     model, predictions, training = main()

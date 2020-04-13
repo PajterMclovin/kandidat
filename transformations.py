@@ -62,7 +62,7 @@ def get_adjacency_matrix():
                 adj[i,n] = 1
     return adj
 
-def reduce_colums(m):
+def reduce_columns(m):
     """
     Returns a matrix containing the non-zero columns of the input matrix
     """

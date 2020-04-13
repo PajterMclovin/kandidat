@@ -19,8 +19,7 @@ from loss_functions import loss_function_wrapper
 from transformations import get_identity_tensor
 from transformations import get_permutation_tensor
 
-from models import FCN
-from models import GCN
+from models import FCN, GCN, CNN
 
 
 def save(folder, figure, learning_curve, model):
@@ -294,6 +293,45 @@ def get_trained_model(train_data, train_labels,
     model = FCN(no_inputs, no_outputs, depth, width,
                 cartesian=cartesian,
                 classification=classification)
+    
+    #select loss function
+    loss = loss_function_wrapper(no_outputs, 
+                                 loss_type=loss_function, 
+                                 permutation=permutation,
+                                 cartesian=cartesian,
+                                 classification=classification)
+    
+    #select optimizer
+    opt = Adam(lr=learning_rate)
+    
+    #compile the network
+    model.compile(optimizer=opt, loss=loss, metrics=['accuracy'])
+    
+    #train the network with training data
+    training = model.fit(train_data, train_labels, 
+                         epochs=no_epochs, 
+                         batch_size=batch_size,
+                         validation_split=validation_split)
+
+    return model, training
+
+def get_trained_model_conv(train_data, train_labels,
+                    validation_split=0.1,
+                    batch_size=2**8,
+                    learning_rate=1e-4,
+                    permutation=True,
+                    cartesian=True,
+                    classification=False,
+                    loss_function='mse',
+                    no_epochs=2,
+                    depth=10, width=128):
+    
+    #get no. inputs and outputs in the model
+    no_inputs = len(train_data[0])                  
+    no_outputs = len(train_labels[0])
+
+    #structure initialization the fully connected neural network
+    model = CNN(no_inputs, no_outputs)
     
     #select loss function
     loss = loss_function_wrapper(no_outputs, 

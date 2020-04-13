@@ -14,7 +14,7 @@ import numpy as np
 
 
 from layers import GraphConv
-from transformations import get_adjacency_matrix
+from transformations import get_adjacency_matrix, reduce_columns
 
 def FCN(no_inputs, no_outputs, no_layers, no_nodes,
         cartesian=False, classification=False):
@@ -97,8 +97,8 @@ def CNN(no_inputs, no_outputs, depth=2, width=8, pooling_type=0):
     
     print("Shaping inputs...")
     
-    A_mat = np.load('conv_mat_A.npy')
-    D_mat = np.load('conv_mat_D.npy')
+    A_mat = reduce_columns(np.load('conv_mat_A.npy'))
+    D_mat = reduce_columns(np.load('conv_mat_D.npy'))
     
     inputs = Input(shape=(no_inputs,), dtype='float32')
     
@@ -107,8 +107,8 @@ def CNN(no_inputs, no_outputs, depth=2, width=8, pooling_type=0):
     
     #reshapes the input to [batch, steps, channels]
     
-    A_in = tf.reshape(A_in, [-1, no_inputs*NEIGHBORS_A, 1])
-    D_in = tf.reshape(D_in, [-1, no_inputs*NEIGHBORS_D, 1])
+    A_in = tf.reshape(A_in, [-1, A_in.shape[1], 1])
+    D_in = tf.reshape(D_in, [-1, D_in.shape[1], 1])
    
     #parameters for conv1D: filters, kernel size, stride, activation
 
