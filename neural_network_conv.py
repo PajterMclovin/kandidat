@@ -58,7 +58,7 @@ def main():
     no_outputs = len(train_labels[0])               
     
     #initiate the network structure
-    model = CNN(no_inputs, no_outputs)
+    model = CNN(no_inputs, no_outputs, depth = 10)
     
     #select loss function
     loss_function = loss_function_wrapper(no_outputs, 
