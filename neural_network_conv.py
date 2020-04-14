@@ -8,6 +8,8 @@
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import EarlyStopping
 
+import sys
+
 from models import CNN
 from loss_functions import loss_function_wrapper
 from plotting import plot_predictions
@@ -57,7 +59,7 @@ def main():
     no_outputs = len(train_labels[0])               
     
     #initiate the network structure
-    model = CNN(no_inputs, no_outputs)
+    model = CNN(no_inputs, no_outputs, depth = 10)
     
     #select loss function
     loss_function = loss_function_wrapper(no_outputs, 
@@ -110,8 +112,8 @@ def main():
     figure.suptitle(title)
     
     save('/home/david/', figure, learning_curve, model)
-   
-    return model
+    
+    return
 
 if __name__ == '__main__':
-    model, predictions, training = main()
+    main()
