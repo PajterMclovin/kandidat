@@ -52,8 +52,6 @@ def main():
     ### ------------- BUILD, TRAIN & TEST THE NEURAL NETWORK ------------------
     
     
-    ### ------------- BUILD, TRAIN & TEST THE NEURAL NETWORK ------------------
-    
     #no. inputs/outputs based on data set
     no_inputs = len(train_data[0])                  
     no_outputs = len(train_labels[0])               
