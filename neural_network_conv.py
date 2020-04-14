@@ -6,6 +6,7 @@
 """
 
 from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.callbacks import EarlyStopping
 
 from models import CNN
 from loss_functions import loss_function_wrapper
@@ -27,7 +28,7 @@ VALIDATION_SPLIT = 0.1                          #portion of training data for ep
 CARTESIAN = True                                #train with cartesian coordinates instead of spherical
 CLASSIFICATION = False                          #train with classification nodes
 
-NO_EPOCHS = 50
+NO_EPOCHS = 1000
                                    #Number of times to go through training data
 BATCH_SIZE = 2**8                                #The training batch size
 LEARNING_RATE = 1e-4                            #Learning rate/step size
@@ -71,7 +72,9 @@ def main():
     #compile the network
     model.compile(optimizer=opt, loss=loss_function, metrics=['accuracy'])
     model.summary()
-   
+    
+    callback = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True, verbose=1)
+    
     training = model.fit(train_data, train_labels, 
                          epochs=NO_EPOCHS, batch_size=BATCH_SIZE,
                          validation_split=VALIDATION_SPLIT)
@@ -107,7 +110,7 @@ def main():
     figure.suptitle(title)
     
     save('/home/david/', figure, learning_curve, model)
-    
+   
     return model
 
 if __name__ == '__main__':

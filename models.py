@@ -5,7 +5,7 @@
 """
 
 from tensorflow.keras import Model, Input
-from tensorflow.keras.layers import Dense, Conv1D, Flatten
+from tensorflow.keras.layers import Dense, Conv1D, Flatten, MaxPooling1D
 from tensorflow.keras.layers import Concatenate
 import tensorflow.keras.backend as K
 
@@ -69,7 +69,7 @@ def GCN(no_inputs, no_outputs, no_layers, no_nodes):
 
 
 
-def CNN(no_inputs, no_outputs, depth=2, width=8, pooling_type=0):
+def CNN(no_inputs, no_outputs, depth=3, pooling_type=0):
     """
 
     Parameters
@@ -95,8 +95,6 @@ def CNN(no_inputs, no_outputs, depth=2, width=8, pooling_type=0):
     NEIGHBORS_A = 16
     NEIGHBORS_D = 19
     
-    print("Shaping inputs...")
-    
     A_mat = reduce_columns(np.load('conv_mat_A.npy'))
     D_mat = reduce_columns(np.load('conv_mat_D.npy'))
     
@@ -113,23 +111,26 @@ def CNN(no_inputs, no_outputs, depth=2, width=8, pooling_type=0):
     #parameters for conv1D: filters, kernel size, stride, activation
 
     x_A = Conv1D(8, NEIGHBORS_A, NEIGHBORS_A, activation='relu', 
-                 input_shape = (None, no_inputs*NEIGHBORS_A, 1), data_format = "channels_last" )(A_in)
+                 input_shape = (None, A_in.shape[1], 1), data_format = "channels_last" )(A_in)
     
     x_D = Conv1D(8, NEIGHBORS_D, NEIGHBORS_D, activation='relu', 
-                 input_shape = (None, no_inputs*NEIGHBORS_D, 1), data_format = "channels_last" )(D_in)
+                 input_shape = (None, D_in.shape[1], 1), data_format = "channels_last" )(D_in)
     
-    x_A = Conv1D(4, 9, 3, activation='relu')(x_A)
-    x_D = Conv1D(4, 9, 3, activation='relu')(x_D)
+    x_A = Conv1D(4, 3, 1, activation='relu')(x_A)
+    x_D = Conv1D(4, 3, 1, activation='relu')(x_D)
+    
+    x_A = MaxPooling1D(pool_size=2)(x_A)
+    x_D = MaxPooling1D(pool_size=2)(x_D)
     
     x_A = Flatten()(x_A)
     x_D = Flatten()(x_D)
     
     FCN_in = Concatenate(axis=1)([x_A, x_D])
     
-    x = Dense(width, activation='relu')(FCN_in)
+    x = Dense(20, activation='relu')(FCN_in)
     
     for i in range(depth-1):
-        x = Dense(width, activation='relu')(x)
+        x = Dense(10, activation='relu')(x)
         
     outputs = Dense(no_outputs, activation='linear')(x)
     
