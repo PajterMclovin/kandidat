@@ -30,13 +30,13 @@ VALIDATION_SPLIT = 0.1                          #portion of training data for ep
 CARTESIAN = True                                #train with cartesian coordinates instead of spherical
 CLASSIFICATION = False                          #train with classification nodes
 
-NO_EPOCHS = 5000
+NO_EPOCHS = int(sys.argv[1])
                                    #Number of times to go through training data
 BATCH_SIZE = 2**8                                #The training batch size
 LEARNING_RATE = 1e-4                            #Learning rate/step size
 PERMUTATION = True                              #set false if using an ordered data set
 LOSS_FUNCTION = 'mse'                           #type of loss: {mse, modulo, cosine} (only mse for cartesian)
-
+MAT = "fix"
 
 def main():
     #load simulation data. OBS. labels need to be ordered in decreasing energy!
@@ -57,7 +57,7 @@ def main():
     no_outputs = len(train_labels[0])               
     
     #initiate the network structure
-    model = CNN(no_inputs, no_outputs, depth = 10)
+    model = CNN(no_inputs, no_outputs, mat = MAT)
     
     #select loss function
     loss_function = loss_function_wrapper(no_outputs, 
@@ -73,7 +73,7 @@ def main():
     model.compile(optimizer=opt, loss=loss_function, metrics=['accuracy'])
     model.summary()
     
-    callback = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True, verbose=1)
+    callback = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True, verbose=1, min_delta=0.01)
     
     training = model.fit(train_data, train_labels, 
                          epochs=NO_EPOCHS, batch_size=BATCH_SIZE,
