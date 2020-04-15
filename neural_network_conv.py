@@ -57,7 +57,8 @@ def main():
     no_outputs = len(train_labels[0])               
     
     #initiate the network structure
-    model = CNN(no_inputs, no_outputs, mat = "fix")
+
+    model = CNN(no_inputs, no_outputs, mat = MAT)
     
     #select loss function
     loss_function = loss_function_wrapper(no_outputs, 
@@ -73,7 +74,7 @@ def main():
     model.compile(optimizer=opt, loss=loss_function, metrics=['accuracy'])
     model.summary()
     
-    callback = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True, verbose=1)
+    callback = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True, verbose=1, min_delta=0.01)
     
     training = model.fit(train_data, train_labels, 
                          epochs=NO_EPOCHS, batch_size=BATCH_SIZE,
