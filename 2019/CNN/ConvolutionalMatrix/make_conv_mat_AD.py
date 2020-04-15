@@ -125,6 +125,37 @@ def get_conv_matrix_one_crystal_AD(crystal_type):
     """
     return out
 
+def get_conv_matrix_one_crystal_AD_fix(crystal_type):
+    if crystal_type == 'A':
+        neighbour_size = 16
+    elif crystal_type == 'B':
+        neighbour_size = 19
+    elif crystal_type == 'C':
+        neighbour_size = 19
+    elif crystal_type == 'D':
+        neighbour_size = 19
+    all_crystals = get_correct_type_crystal_AD()
+    out = np.zeros((162, 162*neighbour_size), dtype=np.float32)
+    for crystal in all_crystals:
+        if hm.get_crystal_type(crystal) != crystal_type:
+            pass
+        else:
+            print("Generating neighbours to crystal:",crystal)
+            first_layer = hm.correct_orientation_first_neighbours(first_layer_neighbours_AD(crystal))
+            second_layer = hm.correct_orientation_with_angles(crystal,second_layer_neighbours_AD(crystal),
+                                                              ref_crystal=first_layer[0])
+            
+            neighbours = np.concatenate((np.array([crystal]),first_layer, second_layer))
+            for index_j in range(len(neighbours)):
+                out[neighbours[index_j]-1, (crystal-1)*len(neighbours) +index_j] = 1
+
+    """
+    Used to remove zero columns, works well for A & D but not for B & C
+    out = np.transpose(out)
+    out = out[~(out==0).all(1)]
+    out = np.transpose(out)
+    """
+    return out
 
 def get_conv_matrix_one_crystal_AD_rotations(crystal_type):
     if crystal_type == 'A':
@@ -155,11 +186,6 @@ def get_conv_matrix_one_crystal_AD_rotations(crystal_type):
     return out
 
 
-if __name__=='__main__':
-    np.save('conv_mat_AD', get_conv_matrix_AD()) # saving the convolution matrix
-"""
-    Not used
-"""
 def get_conv_matrix_one_crystal_AD_update(crystal_type):
     if crystal_type == 'A':
         neighbour_size = 16

@@ -154,13 +154,28 @@ def angle_between_two_crystals(index1,index2,index_ref=None):
         r_ref = coordinates_XYZ_crystal(index_ref)
         r1 = projection_on_plane(r1-r_ref,r_ref)
         r2 = projection_on_plane(r2-r_ref,r_ref)
+       
         crossproduct = np.cross(r1,r2)
         if np.array_equal(r1,r2):
             return 0
         else:
             r1=r1/np.linalg.norm(r1)
             r2=r2/np.linalg.norm(r2)
+            prod = np.dot(r1,r2)
+            
+            if prod > 1:
+                print("angle_between_two_crystals product out of bounds, set to [-1, 1]")
+                print("real product: ")
+                print(prod)
+                prod = 1
+            if prod < -1:
+                print("angle_between_two_crystals product out of bounds, set to [-1, 1]")
+                print("real product: ")
+                print(prod)
+                prod = -1
+            
             angle = np.arccos(np.dot(r1,r2))
+
             if np.linalg.norm(crossproduct+r_ref)<1:
                 sign = -1
             else:
@@ -168,12 +183,13 @@ def angle_between_two_crystals(index1,index2,index_ref=None):
             return sign*angle*180/np.pi
 
 # This index finds which of the crystals that is closest to the beam-out crystal (crystal 81)
-def find_index_shortest_distance_to_crystal_81(crystal_array):
-    ref_crystal=81
+# MOD by david, defaults to 81 but can be given other crystal
+def find_index_shortest_distance_to_crystal(crystal_array, ref_crystal=81):
     tmp_distances=np.ones(len(crystal_array),dtype=np.float32)
     for i in range(len(crystal_array)):
         tmp_distances[i]=distance_between_two_crystals(ref_crystal,crystal_array[i])
     return crystal_array[tmp_distances.argmin()]
+
 
 
 
@@ -202,8 +218,8 @@ def rotate_orientation(input_neighbourhood, crystal_type):
     return np.insert(output,0,mid_crystal)
 
 
-def correct_orientation_with_angles(mid_crystal, neighbour_layers):
-    closest_to_ref = find_index_shortest_distance_to_crystal_81(neighbour_layers)
+def correct_orientation_with_angles(mid_crystal, neighbour_layers, ref_crystal=81):
+    closest_to_ref = find_index_shortest_distance_to_crystal(neighbour_layers, ref_crystal)
     angles = [] # Add angles to this list, they will have the same index as corresponding crystal
     angle_index_map = {}
     for crystal in neighbour_layers:
@@ -218,6 +234,7 @@ def correct_orientation_with_angles(mid_crystal, neighbour_layers):
         angle = angle_index_map[angles[i]]
         out_angles.append(angle)
     return np.asarray(out_angles,dtype=np.int32)
+
 
 
 def correct_orientation_first_neighbours(input_neighbourhood):

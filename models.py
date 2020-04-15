@@ -69,7 +69,7 @@ def GCN(no_inputs, no_outputs, no_layers, no_nodes):
 
 
 
-def CNN(no_inputs, no_outputs, depth=3, pooling_type=0):
+def CNN(no_inputs, no_outputs, depth=3, mat = 'default'):
     """
 
     Parameters
@@ -95,8 +95,12 @@ def CNN(no_inputs, no_outputs, depth=3, pooling_type=0):
     NEIGHBORS_A = 16
     NEIGHBORS_D = 19
     
-    A_mat = reduce_columns(np.load('conv_mat_A.npy'))
-    D_mat = reduce_columns(np.load('conv_mat_D.npy'))
+    if mat == 'default':
+       A_mat = reduce_columns(np.load('conv_mat_A.npy'))
+       D_mat = reduce_columns(np.load('conv_mat_D.npy')) 
+    if mat == 'fix':
+       A_mat = reduce_columns(np.load('conv_mat_A_fix.npy'))
+       D_mat = reduce_columns(np.load('conv_mat_D_fix.npy')) 
     
     inputs = Input(shape=(no_inputs,), dtype='float32')
     
