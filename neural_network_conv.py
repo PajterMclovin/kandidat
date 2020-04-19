@@ -37,6 +37,7 @@ LEARNING_RATE = 1e-4                            #Learning rate/step size
 PERMUTATION = True                              #set false if using an ordered data set
 LOSS_FUNCTION = 'mse'                           #type of loss: {mse, modulo, cosine} (only mse for cartesian)
 MAT_SORT = "CCT"                                #type of sorting used for the convolutional matrix
+USE_ROTATIONS = True
 
 def main():
     #load simulation data. OBS. labels need to be ordered in decreasing energy!
@@ -58,7 +59,7 @@ def main():
     
     #initiate the network structure
 
-    model = CNN(no_inputs, no_outputs, sort = MAT_SORT)
+    model = CNN(no_inputs, no_outputs, sort = MAT_SORT, rotations = USE_ROTATIONS)
     
     #select loss function
     loss_function = loss_function_wrapper(no_outputs, 
