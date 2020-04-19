@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Created on Thu Feb 21 19:34:50 2019
@@ -301,9 +301,9 @@ def neighbour_sorting_A(mid_crystal, ref_crystal=81):
     neighbours_sorted = ccw_sorting(mid_crystal, start_crystal, neighbours)
     out = np.append(out, neighbours_sorted)
     
-    m = first_layer_neighbours_AD(neighbours_sorted[0])
-    n = first_layer_neighbours_AD(neighbours_sorted[1])
-    intersect = np.intersect1d(m, n)
+    n1 = first_layer_neighbours_AD(neighbours_sorted[0])
+    n2 = first_layer_neighbours_AD(neighbours_sorted[1])
+    intersect = np.intersect1d(n1, n2)
     start_crystal_2 = np.setdiff1d(intersect, mid_crystal)[0]
 
     n_neighbours_sorted = ccw_sorting(mid_crystal, start_crystal_2, n_neighbours)    
@@ -351,9 +351,9 @@ def neighbour_sorting_D(mid_crystal, ref_crystal=81):
     
     ## second neighbours
     
-    m = first_layer_neighbours_AD(neighbours_sorted[0])
-    n = first_layer_neighbours_AD(neighbours_sorted[1])
-    intersect = np.intersect1d(m, n)
+    n1 = first_layer_neighbours_AD(neighbours_sorted[0])
+    n2 = first_layer_neighbours_AD(neighbours_sorted[1])
+    intersect = np.intersect1d(n1, n2)
     start_crystal_2 = np.setdiff1d(intersect, mid_crystal)[0]
 
     n_neighbours_sorted = ccw_sorting(mid_crystal, start_crystal_2, n_neighbours)    
@@ -364,7 +364,7 @@ def neighbour_sorting_D(mid_crystal, ref_crystal=81):
 
 def rotate_orientation(input_neighbourhood, crystal_type):
     """
-        Used to rotate a neighbourhood
+        Used to rotate a neighbourhood CCW once
     """
     if crystal_type == 'A':
         first_layer_size = 5
@@ -390,7 +390,11 @@ def test():
     a = neighbour_sorting_D(13)
     for i in range(len(a)):
         print(a[i], "\t", get_crystal_type(a[i]))
-
+    
+    b = rotate_orientation(a,'D')
+    for i in range(len(b)):
+        print(b[i], "\t", get_crystal_type(b[i]))
+        
 
 ##########################################################
 ########### Potentially obsolete methods #################
@@ -449,4 +453,3 @@ def correct_orientation_first_neighbours(input_neighbourhood):
         neighbour_oriented=np.concatenate((input_neighbourhood[start_crystal:],input_neighbourhood[0:start_crystal]))
 
     return np.array(neighbour_oriented).astype(np.int)
-

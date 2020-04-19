@@ -69,7 +69,7 @@ def GCN(no_inputs, no_outputs, no_layers, no_nodes):
 
 
 
-def CNN(no_inputs, no_outputs, depth=3, sort = 'CTT'):
+def CNN(no_inputs, no_outputs, depth=3, sort = 'CTT', rotations = False):
     """
 
     Parameters
@@ -91,9 +91,13 @@ def CNN(no_inputs, no_outputs, depth=3, sort = 'CTT'):
         DESCRIPTION.
 
     """
-
-    NEIGHBORS_A = 16
-    NEIGHBORS_D = 19
+    
+    NEIGHBORS_A, NEIGHBORS_D = 16, 19
+    
+    if rotations:
+        no_rotations_A, no_rotations_D = 5, 6
+    else:
+        no_rotations_A, no_rotations_D = 1, 1
     
     MAT_PATH = 'ConvolutionalMatrix/'
     
@@ -112,10 +116,10 @@ def CNN(no_inputs, no_outputs, depth=3, sort = 'CTT'):
    
     #parameters for conv1D: filters, kernel size, stride, activation
 
-    x_A = Conv1D(8, NEIGHBORS_A, NEIGHBORS_A, activation='relu', 
+    x_A = Conv1D(8, NEIGHBORS_A*no_rotations_A, NEIGHBORS_A*no_rotations_A, activation='relu', 
                  input_shape = (None, A_in.shape[1], 1), data_format = "channels_last" )(A_in)
     
-    x_D = Conv1D(8, NEIGHBORS_D, NEIGHBORS_D, activation='relu', 
+    x_D = Conv1D(8, NEIGHBORS_D*no_rotations_D, NEIGHBORS_D*no_rotations_D, activation='relu', 
                  input_shape = (None, D_in.shape[1], 1), data_format = "channels_last" )(D_in)
     
     x_A = Conv1D(4, 3, 1, activation='relu')(x_A)
