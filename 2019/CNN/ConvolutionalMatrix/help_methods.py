@@ -364,7 +364,7 @@ def neighbour_sorting_D(mid_crystal, ref_crystal=81):
 
 def rotate_orientation(input_neighbourhood, crystal_type):
     """
-        Used to rotate a neighbourhood
+        Used to rotate a neighbourhood CCW once
     """
     if crystal_type == 'A':
         first_layer_size = 5
