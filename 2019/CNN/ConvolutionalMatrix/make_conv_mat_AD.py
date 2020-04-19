@@ -14,7 +14,7 @@ import numpy as np
 
 
 ## Load two layers of neighbours, nearest and second nearest.
-neighbours_including_second_nearest = hm.get_second_closest_neighbours()
+neighbours_including_second_nearest = hm.neighbours_including_second_nearest
 
 def count_crystal_types():
     count_A = 0
@@ -73,6 +73,7 @@ def second_layer_neighbours_AD(crystal_index):
 
     # Returns difference of first+second layer array and first array ---> only second layer neighbour
     return np.setdiff1d(first_and_second_layer,first_layer_neighbour)
+
 
 def get_conv_matrix_AD():
     all_crystals = get_correct_type_crystal_AD()

@@ -69,7 +69,7 @@ def GCN(no_inputs, no_outputs, no_layers, no_nodes):
 
 
 
-def CNN(no_inputs, no_outputs, depth=3, mat = 'default'):
+def CNN(no_inputs, no_outputs, depth=3, sort = 'CTT'):
     """
 
     Parameters
@@ -95,12 +95,10 @@ def CNN(no_inputs, no_outputs, depth=3, mat = 'default'):
     NEIGHBORS_A = 16
     NEIGHBORS_D = 19
     
-    if mat == 'default':
-       A_mat = reduce_columns(np.load('conv_mat_A.npy'))
-       D_mat = reduce_columns(np.load('conv_mat_D.npy')) 
-    if mat == 'fix':
-       A_mat = reduce_columns(np.load('conv_mat_A_fix.npy'))
-       D_mat = reduce_columns(np.load('conv_mat_D_fix.npy')) 
+    MAT_PATH = 'ConvolutionalMatrix/'
+    
+    A_mat = np.load(MAT_PATH+'A_mat_'+sort+'.npy')
+    D_mat = np.load(MAT_PATH+'D_mat_'+sort+'.npy')
     
     inputs = Input(shape=(no_inputs,), dtype='float32')
     

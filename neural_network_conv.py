@@ -24,19 +24,19 @@ from utils import get_no_trainable_parameters
 ## ----------------------------- PARAMETERS -----------------------------------
 
 NPZ_DATAFILE = 'test.npz'                        #or import sys and use sys.argv[1]
-TOTAL_PORTION = 1                          #portion of file data to be used, (0,1]
+TOTAL_PORTION = 1                                #portion of file data to be used, (0,1]
 EVAL_PORTION = 0.1                              #portion of total data for final evalutation (0,1)
 VALIDATION_SPLIT = 0.1                          #portion of training data for epoch validation
 CARTESIAN = True                                #train with cartesian coordinates instead of spherical
 CLASSIFICATION = False                          #train with classification nodes
 
-NO_EPOCHS = int(sys.argv[1])
-                                   #Number of times to go through training data
+NO_EPOCHS = int(sys.arv[1])
+                                               #Number of times to go through training data
 BATCH_SIZE = 2**8                                #The training batch size
 LEARNING_RATE = 1e-4                            #Learning rate/step size
 PERMUTATION = True                              #set false if using an ordered data set
 LOSS_FUNCTION = 'mse'                           #type of loss: {mse, modulo, cosine} (only mse for cartesian)
-MAT = "fix"
+MAT_SORT = "CCT"                                #type of sorting used for the convolutional matrix
 
 def main():
     #load simulation data. OBS. labels need to be ordered in decreasing energy!
@@ -58,7 +58,7 @@ def main():
     
     #initiate the network structure
 
-    model = CNN(no_inputs, no_outputs, mat = MAT)
+    model = CNN(no_inputs, no_outputs, sort = MAT_SORT)
     
     #select loss function
     loss_function = loss_function_wrapper(no_outputs, 
