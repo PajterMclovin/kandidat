@@ -69,7 +69,7 @@ def GCN(no_inputs, no_outputs, no_layers, no_nodes):
 
 
 
-def CNN(no_inputs, no_outputs, depth=3, sort = 'CTT', rotations = False):
+def CNN(no_inputs, no_outputs, depth=3, filters = 8, sort = 'CTT', rotations = False):
     """
 
     Parameters
@@ -96,13 +96,15 @@ def CNN(no_inputs, no_outputs, depth=3, sort = 'CTT', rotations = False):
     
     if rotations:
         no_rotations_A, no_rotations_D = 5, 6
+        rot = "_rot"
     else:
         no_rotations_A, no_rotations_D = 1, 1
+        rot = ""
     
     MAT_PATH = 'ConvolutionalMatrix/'
     
-    A_mat = np.load(MAT_PATH+'A_mat_'+sort+'.npy')
-    D_mat = np.load(MAT_PATH+'D_mat_'+sort+'.npy')
+    A_mat = np.load(MAT_PATH+'A_mat_'+sort+rot+'.npy')
+    D_mat = np.load(MAT_PATH+'D_mat_'+sort+rot+'.npy')
     
     inputs = Input(shape=(no_inputs,), dtype='float32')
     
@@ -122,8 +124,8 @@ def CNN(no_inputs, no_outputs, depth=3, sort = 'CTT', rotations = False):
     x_D = Conv1D(8, NEIGHBORS_D*no_rotations_D, NEIGHBORS_D*no_rotations_D, activation='relu', 
                  input_shape = (None, D_in.shape[1], 1), data_format = "channels_last" )(D_in)
     
-    x_A = Conv1D(4, 3, 1, activation='relu')(x_A)
-    x_D = Conv1D(4, 3, 1, activation='relu')(x_D)
+    x_A = Conv1D(8, 3, 1, activation='relu')(x_A)
+    x_D = Conv1D(8, 3, 1, activation='relu')(x_D)
     
     x_A = MaxPooling1D(pool_size=2)(x_A)
     x_D = MaxPooling1D(pool_size=2)(x_D)
