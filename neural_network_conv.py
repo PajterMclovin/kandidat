@@ -30,7 +30,7 @@ VALIDATION_SPLIT = 0.1                          #portion of training data for ep
 CARTESIAN = True                                #train with cartesian coordinates instead of spherical
 CLASSIFICATION = False                          #train with classification nodes
 
-NO_EPOCHS = int(sys.arv[1])
+NO_EPOCHS = int(sys.argv[1])
                                                #Number of times to go through training data
 BATCH_SIZE = 2**8                                #The training batch size
 LEARNING_RATE = 1e-4                            #Learning rate/step size
@@ -74,7 +74,7 @@ def main():
     model.compile(optimizer=opt, loss=loss_function, metrics=['accuracy'])
     model.summary()
     
-    callback = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True, verbose=1, min_delta=0.01)
+    callback = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True, verbose=1, min_delta=0.1)
     
     training = model.fit(train_data, train_labels, 
                          epochs=NO_EPOCHS, batch_size=BATCH_SIZE,
