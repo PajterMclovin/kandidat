@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+
 # -*- coding: utf-8 -*-
 """
 Created on Thu Feb 21 19:34:50 2019
@@ -449,3 +449,4 @@ def correct_orientation_first_neighbours(input_neighbourhood):
         neighbour_oriented=np.concatenate((input_neighbourhood[start_crystal:],input_neighbourhood[0:start_crystal]))
 
     return np.array(neighbour_oriented).astype(np.int)
+
