@@ -118,10 +118,10 @@ def CNN(no_inputs, no_outputs, depth=3, filters = 8, sort = 'CTT', rotations = F
    
     #parameters for conv1D: filters, kernel size, stride, activation
 
-    x_A = Conv1D(8, NEIGHBORS_A*no_rotations_A, NEIGHBORS_A*no_rotations_A, activation='relu', 
+    x_A = Conv1D(8, NEIGHBORS_A, NEIGHBORS_A, activation='relu', 
                  input_shape = (None, A_in.shape[1], 1), data_format = "channels_last" )(A_in)
     
-    x_D = Conv1D(8, NEIGHBORS_D*no_rotations_D, NEIGHBORS_D*no_rotations_D, activation='relu', 
+    x_D = Conv1D(8, NEIGHBORS_D, NEIGHBORS_D, activation='relu', 
                  input_shape = (None, D_in.shape[1], 1), data_format = "channels_last" )(D_in)
     
     x_A = Conv1D(8, 3, 1, activation='relu')(x_A)
