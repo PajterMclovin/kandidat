@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Thu Feb 21 19:34:50 2019
+Created on April 2020
 
-@author: rickardkarlsson
+@author: rickardkarlsson + davidrinman
 """
 
 #### METHODS FOR OTHER SCRIPTS IN CREATING CONVOLUTIONAL MATRICES THAT INCLUDE NEIGHBOURS #########
@@ -239,20 +239,23 @@ def find_index_shortest_distance_to_crystal(crystal_array, ref_crystal=81):
 ##########################################################
 ########### Orientation methods ##########################
 ##########################################################
+   
 
-def ccw_sorting(mid_crystal, start_crystal, neighbours):
+def rotation_sorting(mid_crystal, start_crystal, neighbours, direction = "ccw"):
     """
-
+    Takes a vector of neighbours and arranges it in counter-clockwise order
+    around the mid_crystal, starting with start_crystal
+    
     Parameters
     ----------
     mid_crystal:        crystal number to center the rotation around
     start_crystal :     crystal number of the first crystal in the list
     neighbours :        list of crystal numbers to be sorted
+    direction :         "ccw" or "cw" for counter-clockwise or clockwise
 
     Returns
     -------
-    An array of crystal numbers, sorted in counter-clockwise order 
-    (as seen from the centre of XB), starting from start_crystal
+    An array of sorted crystal numbers
 
     """
     angles = [] # Add angles to this list, they will have the same index as
@@ -269,52 +272,20 @@ def ccw_sorting(mid_crystal, start_crystal, neighbours):
         i = (start_index+i)%len(angles)
         angle = angle_index_map[angles[i]]
         out_angles.append(angle)
-    return np.asarray(out_angles, dtype=np.int32)    
+    if direction == "ccw":
+        out = out_angles
+    if direction == "cw":
+        out_angles = np.flip(out_angles)
+        out_angles = np.roll(out_angles, 1)
+        out = out_angles
+ 
+    return np.asarray(out, dtype=np.int32)   
     
-def neighbour_sorting_A(mid_crystal, ref_crystal=81):
-    """
-    Sorts the D-crystal according to the CCT-sorting as mentioned in the report
-    
-    Parameters
-    ----------
-    mid_crystal :       index of the middle crystal
-    neighbours :        list of indices of the neighbouring crystals
-    ref_crystal :       reference crystal used for determining which B-crystal
-                        to use as index 0
-    Returns
-    -------
-    int
-        Cluster vector 
 
+def get_sorted_neighbours(mid_crystal, crystal_type, direction = "ccw", ref_crystal=81):
     """
-
-    if get_crystal_type(mid_crystal) != "A":
-        print("Wrong crystal type detected in sorting @ crystal ", mid_crystal)
-        return
-    
-    neighbours = first_layer_neighbours_AD(mid_crystal)
-    n_neighbours = second_layer_neighbours_AD(mid_crystal)
-    
-    out = np.array(mid_crystal, dtype = np.int32)
-    
-    start_crystal = find_index_shortest_distance_to_crystal(neighbours, ref_crystal)
-    neighbours_sorted = ccw_sorting(mid_crystal, start_crystal, neighbours)
-    out = np.append(out, neighbours_sorted)
-    
-    n1 = first_layer_neighbours_AD(neighbours_sorted[0])
-    n2 = first_layer_neighbours_AD(neighbours_sorted[1])
-    intersect = np.intersect1d(n1, n2)
-    start_crystal_2 = np.setdiff1d(intersect, mid_crystal)[0]
-
-    n_neighbours_sorted = ccw_sorting(mid_crystal, start_crystal_2, n_neighbours)    
-    out = np.append(out, n_neighbours_sorted)
-    
-    return out
-    
-    
-def neighbour_sorting_D(mid_crystal, ref_crystal=81):
-    """
-    Sorts the D-crystal according to the CCT-sorting as mentioned in the report
+    returns an array of central crystal, neighbours and next-neighbours 
+    using CCT sort as per the report
     
     Parameters
     ----------
@@ -329,9 +300,6 @@ def neighbour_sorting_D(mid_crystal, ref_crystal=81):
 
     """
     
-    if get_crystal_type(mid_crystal) != "D":
-        print("Wrong crystal type detected in sorting @ crystal ", mid_crystal)
-        return
     
     neighbours = first_layer_neighbours_AD(mid_crystal)
     n_neighbours = second_layer_neighbours_AD(mid_crystal)
@@ -339,14 +307,20 @@ def neighbour_sorting_D(mid_crystal, ref_crystal=81):
     out = np.array(mid_crystal, dtype = np.int32)
     
     ## first neighbours
-    B_crystals = []
-    for i in range(len(neighbours)):
-        crystal = neighbours[i]
-        if get_crystal_type(crystal) == "B":
-            B_crystals.append(crystal)
+    if crystal_type == "D":
+        B_crystals = []
+        for i in range(len(neighbours)):
+            crystal = neighbours[i]
+            if get_crystal_type(crystal) == "B":
+                B_crystals.append(crystal)
     
-    start_crystal = find_index_shortest_distance_to_crystal(B_crystals, ref_crystal)
-    neighbours_sorted = ccw_sorting(mid_crystal, start_crystal, neighbours)
+        start_crystal = find_index_shortest_distance_to_crystal(B_crystals, ref_crystal)    
+    elif crystal_type == "A":
+        start_crystal = find_index_shortest_distance_to_crystal(neighbours, ref_crystal)
+    else:
+        print("Invalid crystal type: ", crystal_type)
+        return
+    neighbours_sorted = rotation_sorting(mid_crystal, start_crystal, neighbours, direction)
     out = np.append(out, neighbours_sorted)
     
     ## second neighbours
@@ -356,7 +330,7 @@ def neighbour_sorting_D(mid_crystal, ref_crystal=81):
     intersect = np.intersect1d(n1, n2)
     start_crystal_2 = np.setdiff1d(intersect, mid_crystal)[0]
 
-    n_neighbours_sorted = ccw_sorting(mid_crystal, start_crystal_2, n_neighbours)    
+    n_neighbours_sorted = rotation_sorting(mid_crystal, start_crystal_2, n_neighbours, direction)    
     out = np.append(out, n_neighbours_sorted)
 
     return out
@@ -381,75 +355,3 @@ def rotate_orientation(input_neighbourhood, crystal_type):
     output = np.concatenate((first_layer,second_layer))
     return np.insert(output,0,mid_crystal)
 
-##########################################################
-################## T E S T I N G #########################
-##########################################################
-
-def test():
-    
-    a = neighbour_sorting_D(13)
-    for i in range(len(a)):
-        print(a[i], "\t", get_crystal_type(a[i]))
-    
-    b = rotate_orientation(a,'D')
-    for i in range(len(b)):
-        print(b[i], "\t", get_crystal_type(b[i]))
-        
-
-##########################################################
-########### Potentially obsolete methods #################
-##########################################################
-
-def correct_orientation_with_angles(mid_crystal, neighbour_layers, ref_crystal=81):
-    closest_to_ref = find_index_shortest_distance_to_crystal(neighbour_layers, ref_crystal)
-    angles = [] # Add angles to this list, they will have the same index as corresponding crystal
-    angle_index_map = {}
-    for crystal in neighbour_layers:
-        angle = angle_between_two_crystals(closest_to_ref,crystal,mid_crystal)
-        angles.append(angle)
-        angle_index_map.update({angle:crystal})
-    angles.sort()
-    start_index = angles.index(0)
-    out_angles = []
-    for i in range(len(angles)):
-        i = (start_index+i)%len(angles)
-        angle = angle_index_map[angles[i]]
-        out_angles.append(angle)
-    return np.asarray(out_angles,dtype=np.int32)
-
-
-    
-def correct_orientation_first_neighbours(input_neighbourhood):
-    """
-        Only works for first layer and is taken from tutorial-code
-    """
-    neighbour_size = len(input_neighbourhood)
-    theta=np.zeros(neighbour_size, dtype=np.float32)
-    phi = np.zeros(neighbour_size, dtype=np.float32)
-
-    for j in range(len(input_neighbourhood)):
-        crystal = input_neighbourhood[j]
-        if crystal != -1:
-            theta[j]=np.array(geom_data[crystal-1][2]).astype(np.float32)
-            phi[j]=np.array(geom_data[crystal-1][3]).astype(np.float32)
-    theta_max_index=theta.argmax()
-
-    max_theta=theta[theta_max_index]
-    theta[theta_max_index]=0
-    theta_second_largest_index=theta.argmax()
-    theta_second_largest=theta[theta_second_largest_index]
-
-
-    if max_theta-theta_second_largest<5.5:
-        if phi[theta_max_index]>phi[theta_second_largest_index] and abs(phi[theta_second_largest_index]-phi[theta_max_index])<180:
-            start_crystal=theta_max_index
-        else:
-            start_crystal=theta_second_largest_index
-    else:
-        start_crystal = theta_max_index
-    if start_crystal==0:
-        neighbour_oriented=input_neighbourhood
-    else:
-        neighbour_oriented=np.concatenate((input_neighbourhood[start_crystal:],input_neighbourhood[0:start_crystal]))
-
-    return np.array(neighbour_oriented).astype(np.int)
