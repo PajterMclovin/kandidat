@@ -30,7 +30,7 @@ VALIDATION_SPLIT = 0.1                          #portion of training data for ep
 CARTESIAN = True                                #train with cartesian coordinates instead of spherical
 CLASSIFICATION = False                          #train with classification nodes
 
-NO_EPOCHS = 1000
+NO_EPOCHS = 200
                                                #Number of times to go through training data
 BATCH_SIZE = 2**8                                #The training batch size
 LEARNING_RATE = 1e-4                            #Learning rate/step size
@@ -38,7 +38,8 @@ PERMUTATION = True                              #set false if using an ordered d
 LOSS_FUNCTION = 'mse'                           #type of loss: {mse, modulo, cosine} (only mse for cartesian)
 MAT_SORT = "CCT"                                #type of sorting used for the convolutional matrix
 USE_ROTATIONS = True
-
+USE_REFLECTIONS = True
+FILTERS = [256, 16, 4]                          #must consist of even numbers!
 def main():
     #load simulation data. OBS. labels need to be ordered in decreasing energy!
     data, labels = load_data(NPZ_DATAFILE, TOTAL_PORTION, 
@@ -59,7 +60,8 @@ def main():
     
     #initiate the network structure
 
-    model = CNN(no_inputs, no_outputs, sort = MAT_SORT, rotations = USE_ROTATIONS)
+    model = CNN(no_inputs, no_outputs, sort = MAT_SORT, filters = FILTERS,
+                rotations = USE_ROTATIONS, reflections = USE_REFLECTIONS)
     
     #select loss function
     loss_function = loss_function_wrapper(no_outputs, 
@@ -75,7 +77,7 @@ def main():
     model.compile(optimizer=opt, loss=loss_function, metrics=['accuracy'])
     model.summary()
     
-    callback = EarlyStopping(monitor='val_loss', patience=5, restore_best_weights=True, verbose=1, min_delta=0.1)
+    callback = EarlyStopping(monitor='val_loss', patience=3)
     
     training = model.fit(train_data, train_labels, 
                          epochs=NO_EPOCHS, batch_size=BATCH_SIZE,

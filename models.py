@@ -69,7 +69,8 @@ def GCN(no_inputs, no_outputs, no_layers, no_nodes):
 
 
 
-def CNN(no_inputs, no_outputs, depth=3, filters = 8, sort = 'CTT', rotations = False):
+def CNN(no_inputs, no_outputs, depth=3, width=80, filters = [256, 16, 4],
+        sort = 'CTT', rotations = True, reflections = True):
     """
 
     Parameters
@@ -94,6 +95,7 @@ def CNN(no_inputs, no_outputs, depth=3, filters = 8, sort = 'CTT', rotations = F
     
     NEIGHBORS_A, NEIGHBORS_D = 16, 19
     
+    
     if rotations:
         no_rotations_A, no_rotations_D = 5, 6
         rot = "_rot"
@@ -101,10 +103,17 @@ def CNN(no_inputs, no_outputs, depth=3, filters = 8, sort = 'CTT', rotations = F
         no_rotations_A, no_rotations_D = 1, 1
         rot = ""
     
+    if reflections:
+        refl_mult = 2
+        refl = "_refl"
+    else:
+        refl_mult = 1
+        refl = ""
+    
     MAT_PATH = 'ConvolutionalMatrix/'
     
-    A_mat = np.load(MAT_PATH+'A_mat_'+sort+rot+'.npy')
-    D_mat = np.load(MAT_PATH+'D_mat_'+sort+rot+'.npy')
+    A_mat = np.load(MAT_PATH+'A_mat_'+sort+rot+refl+'.npy')
+    D_mat = np.load(MAT_PATH+'D_mat_'+sort+rot+refl+'.npy')
     
     inputs = Input(shape=(no_inputs,), dtype='float32')
     
@@ -115,30 +124,36 @@ def CNN(no_inputs, no_outputs, depth=3, filters = 8, sort = 'CTT', rotations = F
     
     A_in = tf.reshape(A_in, [-1, A_in.shape[1], 1])
     D_in = tf.reshape(D_in, [-1, D_in.shape[1], 1])
+    
+    filters_D = [3.5*filters[0], 3*filters[1], 2.5*filters[2]]
    
     #parameters for conv1D: filters, kernel size, stride, activation
-
-    x_A = Conv1D(8, NEIGHBORS_A, NEIGHBORS_A, activation='relu', 
+    
+    
+    x_A = Conv1D(filters[0], NEIGHBORS_A, NEIGHBORS_A, activation='relu', 
                  input_shape = (None, A_in.shape[1], 1), data_format = "channels_last" )(A_in)
     
-    x_D = Conv1D(8, NEIGHBORS_D, NEIGHBORS_D, activation='relu', 
+    x_D = Conv1D(filters_D[0], NEIGHBORS_D, NEIGHBORS_D, activation='relu', 
                  input_shape = (None, D_in.shape[1], 1), data_format = "channels_last" )(D_in)
     
-    x_A = Conv1D(8, 3, 1, activation='relu')(x_A)
-    x_D = Conv1D(8, 3, 1, activation='relu')(x_D)
+    x_A = Conv1D(filters[1], no_rotations_A, no_rotations_A, activation='relu')(x_A)
+    x_D = Conv1D(filters_D[1], no_rotations_D, no_rotations_D, activation='relu')(x_D)
     
-    x_A = MaxPooling1D(pool_size=2)(x_A)
-    x_D = MaxPooling1D(pool_size=2)(x_D)
+    x_A = Conv1D(filters[2], refl_mult, refl_mult, activation='relu')(x_A)
+    x_D = Conv1D(filters_D[2], refl_mult, refl_mult, activation='relu')(x_D)
+    
+    #x_A = MaxPooling1D(pool_size=2)(x_A)
+    #x_D = MaxPooling1D(pool_size=2)(x_D)
     
     x_A = Flatten()(x_A)
     x_D = Flatten()(x_D)
     
     FCN_in = Concatenate(axis=1)([x_A, x_D])
     
-    x = Dense(20, activation='relu')(FCN_in)
+    x = Dense(width, activation='relu')(FCN_in)
     
     for i in range(depth-1):
-        x = Dense(10, activation='relu')(x)
+        x = Dense(width, activation='relu')(x)
         
     outputs = Dense(no_outputs, activation='linear')(x)
     
