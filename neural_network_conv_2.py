@@ -87,7 +87,8 @@ def main():
     
     training = model.fit(train_data, train_labels, 
                          epochs=NO_EPOCHS, batch_size=BATCH_SIZE,
-                         validation_split=VALIDATION_SPLIT)
+                         validation_split=VALIDATION_SPLIT,
+                         callbacks=callback)
     
     #plot the learning curve
     learning_curve = plot_loss(training)

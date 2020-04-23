@@ -6,7 +6,7 @@
 
 from tensorflow.keras import Model, Input
 from tensorflow.keras.layers import Dense, Conv1D, Flatten, MaxPooling1D
-from tensorflow.keras.layers import Concatenate
+from tensorflow.keras.layers import Concatenate, BatchNormalization
 import tensorflow.keras.backend as K
 
 import tensorflow as tf
@@ -70,7 +70,8 @@ def GCN(no_inputs, no_outputs, no_layers, no_nodes):
 
 
 def CNN(no_inputs, no_outputs, depth=3, width=80, filters = [256, 16, 4],
-        sort = 'CCT', rotations = True, reflections = True):
+        sort = 'CCT', rotations = True, reflections = True, 
+        batch_normalization = True):
     """
 
     Parameters
@@ -133,11 +134,16 @@ def CNN(no_inputs, no_outputs, depth=3, width=80, filters = [256, 16, 4],
     x_D = Conv1D(filters[0], NEIGHBORS_D, NEIGHBORS_D, activation='relu', 
                  input_shape = (None, D_in.shape[1], 1), data_format = "channels_last" )(D_in)
     
+    if batch_normalization:
+        x_A = BatchNormalization(x_A)
+        x_D = BatchNormalization(x_D)
+    
     x_A = Conv1D(filters[1], no_rotations_A, no_rotations_A, activation='relu')(x_A)
     x_D = Conv1D(filters[1], no_rotations_D, no_rotations_D, activation='relu')(x_D)
     
-    x_A = Conv1D(filters[2], refl_mult, refl_mult, activation='relu')(x_A)
-    x_D = Conv1D(filters[2], refl_mult, refl_mult, activation='relu')(x_D)
+    if batch_normalization:
+        x_A = BatchNormalization(x_A)
+        x_D = BatchNormalization(x_D)
     
     #x_A = MaxPooling1D(pool_size=2)(x_A)
     #x_D = MaxPooling1D(pool_size=2)(x_D)
@@ -149,6 +155,9 @@ def CNN(no_inputs, no_outputs, depth=3, width=80, filters = [256, 16, 4],
     
     x = Dense(width, activation='relu')(FCN_in)
     
+    if batch_normalization:
+        x = BatchNormalization(x)
+
     for i in range(depth-1):
         x = Dense(width, activation='relu')(x)
         
