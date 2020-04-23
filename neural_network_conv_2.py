@@ -64,7 +64,8 @@ def main():
     
     #initiate the network structure
 
-    model = CN_FCN(no_inputs, no_outputs, sort = MAT_SORT, filters = FILTERS,
+    model = CN_FCN(no_inputs, no_outputs, sort = MAT_SORT, depth = DEPTH, 
+                   filters = FILTERS,
                 rotations = USE_ROTATIONS, reflections = USE_REFLECTIONS)
     
     #select loss function
