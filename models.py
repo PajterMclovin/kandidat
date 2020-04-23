@@ -225,9 +225,9 @@ def CN_FCN(no_inputs, no_outputs, depth=[3, 3], width=80, filters = [32, 16],
         x_A = Conv1D(filters[0], 1, 1, activation = 'relu', name = 'FCN_emu_A' + str(i+1))(x_A)
         x_D = Conv1D(filters[0], 1, 1, activation = 'relu', name = 'FCN_emu_D' + str(i+1))(x_D)
     
-    x_A = Conv1D(filters[1], no_rotations_A*refl_mult, no_rotations_A*refl_mult, 
+    x_A = Conv1D(filters[1], no_rotations_A, no_rotations_A*refl_mult, 
                  activation='relu', name = 'Conv_orientation_A')(x_A)
-    x_D = Conv1D(filters[1], no_rotations_D*refl_mult, no_rotations_D*refl_mult,
+    x_D = Conv1D(filters[1], no_rotations_D, no_rotations_D*refl_mult,
                  activation='relu', name = 'Conv_orientation_D')(x_D)
     
     #x_A = MaxPooling1D(pool_size=2)(x_A)
