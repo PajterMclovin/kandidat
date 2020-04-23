@@ -33,7 +33,7 @@ VALIDATION_SPLIT = 0.1                          #portion of training data for ep
 CARTESIAN = True                                #train with cartesian coordinates instead of spherical
 CLASSIFICATION = False                          #train with classification nodes
 
-NO_EPOCHS = 5
+NO_EPOCHS = 200
                                                #Number of times to go through training data
 BATCH_SIZE = 2**8                                #The training batch size
 LEARNING_RATE = 1e-4                            #Learning rate/step size
@@ -43,6 +43,7 @@ MAT_SORT = "CCT"                                #type of sorting used for the co
 USE_ROTATIONS = True
 USE_REFLECTIONS = True
 FILTERS = [32, 16]                          #must consist of even numbers!
+DEPTH = [3,3]
 def main():
     #load simulation data. OBS. labels need to be ordered in decreasing energy!
     data, labels = load_data(NPZ_DATAFILE, TOTAL_PORTION, 
