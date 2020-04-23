@@ -10,7 +10,7 @@ from tensorflow.keras.callbacks import EarlyStopping
 
 import sys
 
-from models import CNN
+from models import CN_FCN
 from loss_functions import loss_function_wrapper
 from plotting import plot_predictions
 from plotting import plot_loss
@@ -21,6 +21,9 @@ from utils import get_permutation_match
 from utils import cartesian_to_spherical
 from utils import get_no_trainable_parameters
 
+
+
+
 ## ----------------------------- PARAMETERS -----------------------------------
 
 NPZ_DATAFILE = 'test.npz'                        #or import sys and use sys.argv[1]
@@ -30,7 +33,7 @@ VALIDATION_SPLIT = 0.1                          #portion of training data for ep
 CARTESIAN = True                                #train with cartesian coordinates instead of spherical
 CLASSIFICATION = False                          #train with classification nodes
 
-NO_EPOCHS = 200
+NO_EPOCHS = 5
                                                #Number of times to go through training data
 BATCH_SIZE = 2**8                                #The training batch size
 LEARNING_RATE = 1e-4                            #Learning rate/step size
@@ -39,7 +42,7 @@ LOSS_FUNCTION = 'mse'                           #type of loss: {mse, modulo, cos
 MAT_SORT = "CCT"                                #type of sorting used for the convolutional matrix
 USE_ROTATIONS = True
 USE_REFLECTIONS = True
-FILTERS = [32, 16, 4]                          #must consist of even numbers!
+FILTERS = [32, 16]                          #must consist of even numbers!
 def main():
     #load simulation data. OBS. labels need to be ordered in decreasing energy!
     data, labels = load_data(NPZ_DATAFILE, TOTAL_PORTION, 
@@ -60,7 +63,7 @@ def main():
     
     #initiate the network structure
 
-    model = CNN(no_inputs, no_outputs, sort = MAT_SORT, filters = FILTERS,
+    model = CN_FCN(no_inputs, no_outputs, sort = MAT_SORT, filters = FILTERS,
                 rotations = USE_ROTATIONS, reflections = USE_REFLECTIONS)
     
     #select loss function
@@ -75,6 +78,7 @@ def main():
    
     #compile the network
     model.compile(optimizer=opt, loss=loss_function, metrics=['accuracy'])
+    
     model.summary()
     
     callback = EarlyStopping(monitor='val_loss', patience=3)

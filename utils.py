@@ -20,6 +20,8 @@ from transformations import get_identity_tensor
 from transformations import get_permutation_tensor
 
 from models import FCN, GCN, CNN
+from contextlib import redirect_stdout
+
 
 
 def save(folder, figure, learning_curve, model):
@@ -40,6 +42,10 @@ def save(folder, figure, learning_curve, model):
     # figure.savefig(folder + 'event_reconstruction.eps', format='eps')
     learning_curve.savefig(folder + 'training_curve.png', format='png')
     model.save_weights(folder + 'weights.h5')
+    # save summary
+    with open('modelsummary.txt', 'w') as f:
+        with redirect_stdout(f):
+            model.summary()
 
 
 def load_data(npz_file_name, total_portion, 
