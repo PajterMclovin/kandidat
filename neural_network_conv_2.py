@@ -42,6 +42,7 @@ LOSS_FUNCTION = 'mse'                           #type of loss: {mse, modulo, cos
 MAT_SORT = "CCT"                                #type of sorting used for the convolutional matrix
 USE_ROTATIONS = True
 USE_REFLECTIONS = True
+USE_BATCH_NORMALIZATION = True
 FILTERS = [32, 16]                          #must consist of even numbers!
 DEPTH = [3,3]
 def main():
@@ -66,7 +67,8 @@ def main():
 
     model = CN_FCN(no_inputs, no_outputs, sort = MAT_SORT, depth = DEPTH, 
                    filters = FILTERS,
-                rotations = USE_ROTATIONS, reflections = USE_REFLECTIONS)
+                rotations = USE_ROTATIONS, reflections = USE_REFLECTIONS,
+                batch_normalization = USE_BATCH_NORMALIZATION)
     
     #select loss function
     loss_function = loss_function_wrapper(no_outputs, 

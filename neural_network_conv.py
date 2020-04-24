@@ -39,7 +39,9 @@ LOSS_FUNCTION = 'mse'                           #type of loss: {mse, modulo, cos
 MAT_SORT = "CCT"                                #type of sorting used for the convolutional matrix
 USE_ROTATIONS = True
 USE_REFLECTIONS = True
-FILTERS = [32, 16, 4]                          #must consist of even numbers!
+USE_BATCH_NORMALIZATION = True
+FILTERS = [32, 16]                            #must consist of even numbers!
+DEPTH = 3                    
 def main():
     #load simulation data. OBS. labels need to be ordered in decreasing energy!
     data, labels = load_data(NPZ_DATAFILE, TOTAL_PORTION, 
@@ -61,7 +63,9 @@ def main():
     #initiate the network structure
 
     model = CNN(no_inputs, no_outputs, sort = MAT_SORT, filters = FILTERS,
-                rotations = USE_ROTATIONS, reflections = USE_REFLECTIONS)
+                depth = DEPTH, 
+                rotations = USE_ROTATIONS, reflections = USE_REFLECTIONS,
+                batch_normalization = USE_BATCH_NORMALIZATION)
     
     #select loss function
     loss_function = loss_function_wrapper(no_outputs, 

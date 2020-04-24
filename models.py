@@ -105,10 +105,8 @@ def CNN(no_inputs, no_outputs, depth=3, width=80, filters = [256, 16, 4],
         rot = ""
     
     if reflections:
-        refl_mult = 2
         refl = "_refl"
     else:
-        refl_mult = 1
         refl = ""
     
     MAT_PATH = 'ConvolutionalMatrix/'
@@ -145,7 +143,6 @@ def CNN(no_inputs, no_outputs, depth=3, width=80, filters = [256, 16, 4],
         x_A = BatchNormalization(x_A)
         x_D = BatchNormalization(x_D)
     
-
     
     x_A = Flatten()(x_A)
     x_D = Flatten()(x_D)
@@ -154,8 +151,6 @@ def CNN(no_inputs, no_outputs, depth=3, width=80, filters = [256, 16, 4],
     
     x = Dense(width, activation='relu')(FCN_in)
     
-    if batch_normalization:
-        x = BatchNormalization(x)
 
     for i in range(depth-1):
         x = Dense(width, activation='relu')(x)
@@ -165,7 +160,8 @@ def CNN(no_inputs, no_outputs, depth=3, width=80, filters = [256, 16, 4],
     return Model(inputs, outputs)
 
 def CN_FCN(no_inputs, no_outputs, depth=[3, 3], width=80, filters = [32, 16],
-        sort = 'CCT', rotations = True, reflections = True):
+        sort = 'CCT', rotations = True, reflections = True, 
+        batch_normalization = True):
     """
 
     Parameters
@@ -199,10 +195,8 @@ def CN_FCN(no_inputs, no_outputs, depth=[3, 3], width=80, filters = [32, 16],
         rot = ""
     
     if reflections:
-        refl_mult = 2
         refl = "_refl"
     else:
-        refl_mult = 1
         refl = ""
     
     MAT_PATH = 'ConvolutionalMatrix/'
@@ -228,16 +222,24 @@ def CN_FCN(no_inputs, no_outputs, depth=[3, 3], width=80, filters = [32, 16],
     x_D = Conv1D(filters[0], NEIGHBORS_D, NEIGHBORS_D, activation='relu', name='Conv_cluster_D',
                  input_shape = (None, D_in.shape[1], 1), data_format = "channels_last" )(D_in)
     
+    if batch_normalization:
+        x_A = BatchNormalization(x_A)
+        x_D = BatchNormalization(x_D)
+        
     #FCN-tjosan
     for i in range(depth[0]):
         x_A = Conv1D(filters[0], 1, 1, activation = 'relu', name = 'FCN_emu_A' + str(i+1))(x_A)
         x_D = Conv1D(filters[0], 1, 1, activation = 'relu', name = 'FCN_emu_D' + str(i+1))(x_D)
     
-    x_A = Conv1D(filters[1], no_rotations_A, no_rotations_A*refl_mult, 
+    x_A = Conv1D(filters[1], no_rotations_A, no_rotations_A, 
                  activation='relu', name = 'Conv_orientation_A')(x_A)
-    x_D = Conv1D(filters[1], no_rotations_D, no_rotations_D*refl_mult,
+    x_D = Conv1D(filters[1], no_rotations_D, no_rotations_D,
                  activation='relu', name = 'Conv_orientation_D')(x_D)
-    
+
+    if batch_normalization:
+        x_A = BatchNormalization(x_A)
+        x_D = BatchNormalization(x_D)
+        
     #x_A = MaxPooling1D(pool_size=2)(x_A)
     #x_D = MaxPooling1D(pool_size=2)(x_D)
     
