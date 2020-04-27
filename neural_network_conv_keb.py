@@ -10,28 +10,27 @@ from tensorflow.keras.callbacks import EarlyStopping
 
 import sys
 
-from models import CN_FCN
+from models import CNN
 from loss_functions import loss_function_wrapper
-from plotting import plot_predictions
-from plotting import plot_loss
 from utils import load_data
 from utils import save
 from utils import get_eval_data
 from utils import get_permutation_match
 from utils import cartesian_to_spherical
-from utils import get_no_trainable_parameters
+
+from contextlib import redirect_stdout
 
 
 ## ----------------------------- PARAMETERS -----------------------------------
 
-NPZ_DATAFILE = 'test.npz'                        #or import sys and use sys.argv[1]
+NPZ_DATAFILE = sys.argv[1]                      #or import sys and use sys.argv[1]
 TOTAL_PORTION = 1                                #portion of file data to be used, (0,1]
 EVAL_PORTION = 0.1                              #portion of total data for final evalutation (0,1)
 VALIDATION_SPLIT = 0.1                          #portion of training data for epoch validation
 CARTESIAN = True                                #train with cartesian coordinates instead of spherical
 CLASSIFICATION = False                          #train with classification nodes
 
-NO_EPOCHS = 200
+NO_EPOCHS = int(sys.argv[2])
                                                #Number of times to go through training data
 BATCH_SIZE = 2**8                                #The training batch size
 LEARNING_RATE = 1e-4                            #Learning rate/step size
@@ -40,10 +39,20 @@ LOSS_FUNCTION = 'mse'                           #type of loss: {mse, modulo, cos
 MAT_SORT = "CCT"                                #type of sorting used for the convolutional matrix
 USE_ROTATIONS = True
 USE_REFLECTIONS = True
-USE_BATCH_NORMALIZATION = True
-FILTERS = [32, 16]                          #must consist of even numbers!
-DEPTH = [3,3]
+
+if sys.argv[3] == "T":
+   USE_BATCH_NORMALIZATION = True 
+else:
+   USE_BATCH_NORMALIZATION = False 
+
+FILTERS = [int(sys.argv[4]), int(sys.argv[5])]                            #must consist of even numbers!
+DEPTH = int(sys.argv[6])    
+
+id_str = NPZ_DATAFILE + "_" + 
+                
 def main():
+    #load argv
+    
     #load simulation data. OBS. labels need to be ordered in decreasing energy!
     data, labels = load_data(NPZ_DATAFILE, TOTAL_PORTION, 
                              cartesian=CARTESIAN,
@@ -63,8 +72,8 @@ def main():
     
     #initiate the network structure
 
-    model = CN_FCN(no_inputs, no_outputs, sort = MAT_SORT, depth = DEPTH, 
-                   filters = FILTERS,
+    model = CNN(no_inputs, no_outputs, sort = MAT_SORT, filters = FILTERS,
+                depth = DEPTH, 
                 rotations = USE_ROTATIONS, reflections = USE_REFLECTIONS,
                 batch_normalization = USE_BATCH_NORMALIZATION)
     
@@ -80,7 +89,6 @@ def main():
    
     #compile the network
     model.compile(optimizer=opt, loss=loss_function, metrics=['accuracy'])
-    
     model.summary()
     
     callback = EarlyStopping(monitor='val_loss', patience=3)
@@ -89,10 +97,7 @@ def main():
                          epochs=NO_EPOCHS, batch_size=BATCH_SIZE,
                          validation_split=VALIDATION_SPLIT,
                          callbacks=callback)
-    
-    #plot the learning curve
-    learning_curve = plot_loss(training)
-     
+
     
     #plot predictions on evaluation data
     predictions = model.predict(eval_data)
@@ -103,24 +108,11 @@ def main():
         eval_labels = cartesian_to_spherical(eval_labels)    
     if PERMUTATION:
         predictions, labels = get_permutation_match(predictions, eval_labels, CARTESIAN, loss_type=LOSS_FUNCTION)
-
     
-    
-    #plot the "lasersvärd"
-    figure, rec_events = plot_predictions(predictions, eval_labels, 
-                                                show_detector_angles=True)
-    
-    #add title
-    no_params = get_no_trainable_parameters(model)
-    title = """trainable parameters: {}, epochs: {}, loss: {}, 
-               cartesian: {}, permutation: {}, max_mult: {},
-               #events: {} (training) {} (evaluation, shown)
-            """.format(no_params, NO_EPOCHS, LOSS_FUNCTION, 
-                       CARTESIAN, PERMUTATION, int(no_outputs/3),
-                       len(train_data), len(eval_data))
-    figure.suptitle(title)
-    
-    save('/home/david/', figure, learning_curve, model)
+    model.save_weights('weights.h5')
+    with open('modelsummary.txt', 'w') as f:
+        with redirect_stdout(f):
+            model.summary()
     
     return
 

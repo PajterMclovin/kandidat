@@ -47,7 +47,6 @@ def save(folder, figure, learning_curve, model):
         with redirect_stdout(f):
             model.summary()
 
-
 def load_data(npz_file_name, total_portion, 
               cartesian=False, classification=False):
     """
