@@ -23,7 +23,7 @@ from contextlib import redirect_stdout
 
 ## ----------------------------- PARAMETERS -----------------------------------
 
-#### C-C-F NETWORK ####
+#### C-F-C-F NETWORK ####
 
 NPZ_DATAFILE = sys.argv[1]+'.npz'                      #or import sys and use sys.argv[1]
 TOTAL_PORTION = 1                                #portion of file data to be used, (0,1]
@@ -48,7 +48,7 @@ else:
    USE_BATCH_NORMALIZATION = False 
 
 FILTERS = [int(sys.argv[4]), int(sys.argv[5])]                            #must consist of even numbers!
-DEPTH = int(sys.argv[6])    
+DEPTH = [int(sys.argv[6]), int(sys.argv[7])]   
                 
 def main():
     #name folder
@@ -79,7 +79,7 @@ def main():
     
     #initiate the network structure
 
-    model = CNN(no_inputs, no_outputs, sort = MAT_SORT, filters = FILTERS,
+    model = CN_FCN(no_inputs, no_outputs, sort = MAT_SORT, filters = FILTERS,
                 depth = DEPTH, 
                 rotations = USE_ROTATIONS, reflections = USE_REFLECTIONS,
                 batch_normalization = USE_BATCH_NORMALIZATION)
