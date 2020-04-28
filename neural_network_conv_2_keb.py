@@ -62,6 +62,7 @@ def main():
     #make folder
     try:
         os.makedirs(folder)
+        print("Skapapt mapp: "+folder)
     except FileExistsError:
         print("Invalid folder!")
     
@@ -129,7 +130,7 @@ def main():
             model.summary()
     
     #save history
-    with open(folder, 'wb') as file_pi:
+    with open(folder+'traininghistory', 'wb') as file_pi:
         pickle.dump(training.history, file_pi)
     
     return

@@ -62,6 +62,7 @@ def main():
     #make folder
     try:
         os.makedirs(folder)
+        print("Skapapt mapp: "+folder)
     except FileExistsError:
         print("Invalid folder!")
     
@@ -123,8 +124,6 @@ def main():
         predictions, labels = get_permutation_match(predictions, eval_labels, CARTESIAN, loss_type=LOSS_FUNCTION)
     
     
-    
-    
     #save weights
     model.save_weights(folder+'weights.h5')
     
@@ -134,7 +133,7 @@ def main():
             model.summary()
     
     #save history
-    with open(folder, 'wb') as file_pi:
+    with open(folder+'traininghistory', 'wb') as file_pi:
         pickle.dump(training.history, file_pi)
     
     return
