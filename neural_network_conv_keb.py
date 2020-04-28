@@ -95,14 +95,14 @@ def main():
     opt = Adam(lr=LEARNING_RATE)
    
     #compile the network
-    model.compile(optimizer=opt, loss=loss_function, metrics=['accuracy'])
+    model.compile(optimizer=opt, loss=loss_function, metrics=['mse'])
     
-    callback = EarlyStopping(monitor='val_loss', patience=3)
+    callback = EarlyStopping(monitor='mse', patience=3)
     
     training = model.fit(train_data, train_labels, 
                          epochs=NO_EPOCHS, batch_size=BATCH_SIZE,
                          validation_split=VALIDATION_SPLIT,
-                         callbacks=callback)
+                         callbacks=[callback])
 
     
     #plot predictions on evaluation data

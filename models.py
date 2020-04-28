@@ -133,15 +133,15 @@ def CNN(no_inputs, no_outputs, depth=3, width=80, filters = [256, 16, 4],
                  input_shape = (None, D_in.shape[1], 1), data_format = "channels_last" )(D_in)
     
     if batch_normalization:
-        x_A = BatchNormalization(x_A)
-        x_D = BatchNormalization(x_D)
+        x_A = BatchNormalization()(x_A)
+        x_D = BatchNormalization()(x_D)
     
     x_A = Conv1D(filters[1], no_rotations_A, no_rotations_A, activation='relu')(x_A)
     x_D = Conv1D(filters[1], no_rotations_D, no_rotations_D, activation='relu')(x_D)
     
     if batch_normalization:
-        x_A = BatchNormalization(x_A)
-        x_D = BatchNormalization(x_D)
+        x_A = BatchNormalization()(x_A)
+        x_D = BatchNormalization()(x_D)
     
     
     x_A = Flatten()(x_A)
@@ -223,8 +223,8 @@ def CN_FCN(no_inputs, no_outputs, depth=[3, 3], width=80, filters = [32, 16],
                  input_shape = (None, D_in.shape[1], 1), data_format = "channels_last" )(D_in)
     
     if batch_normalization:
-        x_A = BatchNormalization(x_A)
-        x_D = BatchNormalization(x_D)
+        x_A = BatchNormalization()(x_A)
+        x_D = BatchNormalization()(x_D)
         
     #FCN-tjosan
     for i in range(depth[0]):
@@ -237,8 +237,8 @@ def CN_FCN(no_inputs, no_outputs, depth=[3, 3], width=80, filters = [32, 16],
                  activation='relu', name = 'Conv_orientation_D')(x_D)
 
     if batch_normalization:
-        x_A = BatchNormalization(x_A)
-        x_D = BatchNormalization(x_D)
+        x_A = BatchNormalization()(x_A)
+        x_D = BatchNormalization()(x_D)
         
     #x_A = MaxPooling1D(pool_size=2)(x_A)
     #x_D = MaxPooling1D(pool_size=2)(x_D)
