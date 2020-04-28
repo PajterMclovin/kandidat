@@ -9,6 +9,7 @@ from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import EarlyStopping
 
 import sys
+import os
 import pickle
 
 from models import CNN
@@ -51,13 +52,19 @@ FILTERS = [int(sys.argv[4]), int(sys.argv[5])]                            #must 
 DEPTH = int(sys.argv[6])    
                 
 def main():
-    #name folder
-    folder = ""
+    #name folder for save-files
+    folder = ""  
     for i in range(len(sys.argv)-1):
         i = i+1
         folder = folder + sys.argv[i]
         if i < len(sys.argv)-1:
             folder = folder + "_"
+    #make folder
+    try:
+        os.makedirs(folder)
+    except FileExistsError:
+        print("Invalid folder!")
+    
     folder = folder + "/"
     
     #load simulation data. OBS. labels need to be ordered in decreasing energy!
@@ -95,9 +102,9 @@ def main():
     opt = Adam(lr=LEARNING_RATE)
    
     #compile the network
-    model.compile(optimizer=opt, loss=loss_function, metrics=['mse'])
+    model.compile(optimizer=opt, loss=loss_function, metrics=['accuracy'])
     
-    callback = EarlyStopping(monitor='mse', patience=3)
+    callback = EarlyStopping(monitor='val_loss', patience=3)
     
     training = model.fit(train_data, train_labels, 
                          epochs=NO_EPOCHS, batch_size=BATCH_SIZE,
@@ -114,6 +121,9 @@ def main():
         eval_labels = cartesian_to_spherical(eval_labels)    
     if PERMUTATION:
         predictions, labels = get_permutation_match(predictions, eval_labels, CARTESIAN, loss_type=LOSS_FUNCTION)
+    
+    
+    
     
     #save weights
     model.save_weights(folder+'weights.h5')

@@ -9,6 +9,7 @@ from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import EarlyStopping
 
 import sys
+import os
 import pickle
 
 from models import CN_FCN
@@ -51,14 +52,18 @@ FILTERS = [int(sys.argv[4]), int(sys.argv[5])]                            #must 
 DEPTH = [int(sys.argv[6]), int(sys.argv[7])]   
                 
 def main():
-    #name folder
-    folder = ""
+    #name folder for save-files
+    folder = ""  
     for i in range(len(sys.argv)-1):
         i = i+1
         folder = folder + sys.argv[i]
         if i < len(sys.argv)-1:
             folder = folder + "_"
-    folder = folder + "/"
+    #make folder
+    try:
+        os.makedirs(folder)
+    except FileExistsError:
+        print("Invalid folder!")
     
     #load simulation data. OBS. labels need to be ordered in decreasing energy!
     data, labels = load_data(NPZ_DATAFILE, TOTAL_PORTION, 
@@ -97,7 +102,7 @@ def main():
     #compile the network
     model.compile(optimizer=opt, loss=loss_function, metrics=['mse'])
     
-    callback = EarlyStopping(monitor='mse', patience=3)
+    callback = EarlyStopping(monitor='val_loss', patience=3)
     
     training = model.fit(train_data, train_labels, 
                          epochs=NO_EPOCHS, batch_size=BATCH_SIZE,
