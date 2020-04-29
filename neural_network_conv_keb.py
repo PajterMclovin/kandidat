@@ -6,7 +6,7 @@
 """
 
 from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 
 import sys
 import os
@@ -53,7 +53,7 @@ DEPTH = int(sys.argv[6])
                 
 def main():
     #name folder for save-files
-    folder = ""  
+    folder = "~/pfs/"  
     for i in range(len(sys.argv)-1):
         i = i+1
         folder = folder + sys.argv[i]
@@ -105,12 +105,13 @@ def main():
     #compile the network
     model.compile(optimizer=opt, loss=loss_function, metrics=['accuracy'])
     
-    callback = EarlyStopping(monitor='val_loss', patience=3)
+    es = EarlyStopping(monitor='val_loss', patience=3)
+    mcp = ModelCheckpoint(filepath=folder+'checkpoint', monitor='val_loss')
     
     training = model.fit(train_data, train_labels, 
                          epochs=NO_EPOCHS, batch_size=BATCH_SIZE,
                          validation_split=VALIDATION_SPLIT,
-                         callbacks=[callback])
+                         callbacks=[es, mcp])
 
     
     #plot predictions on evaluation data
