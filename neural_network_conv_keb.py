@@ -53,7 +53,7 @@ DEPTH = int(sys.argv[6])
                 
 def main():
     #name folder for save-files
-    folder = "~/pfs/"  
+    folder = "/"  
     for i in range(len(sys.argv)-1):
         i = i+1
         folder = folder + sys.argv[i]
