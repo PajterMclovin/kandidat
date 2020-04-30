@@ -27,7 +27,7 @@ from contextlib import redirect_stdout
 
 #### C-F-C-F NETWORK ####
 
-NPZ_DATAFILE = sys.argv[1]+'.npz'                #or import sys and use sys.argv[1]
+NPZ_DATAFILE = 'Data/'+sys.argv[1]+'.npz'                #or import sys and use sys.argv[1]
 TOTAL_PORTION = 1                                #portion of file data to be used, (0,1]
 EVAL_PORTION = 0.1                              #portion of total data for final evalutation (0,1)
 VALIDATION_SPLIT = 0.1                          #portion of training data for epoch validation
@@ -53,7 +53,6 @@ FILTERS = [int(sys.argv[4]), int(sys.argv[5])]                            #must 
 DEPTH = [int(sys.argv[6]), int(sys.argv[7])]   
                 
 def main():
-    #name folder for save-files
     folder = "/"  
     for i in range(len(sys.argv)-1):
         i = i+1
@@ -68,17 +67,15 @@ def main():
             if subf == 0:
                 string = ""
             else:
-                string = str(subf)+"/"
-            os.makedirs(string+folder)
+                string = "/"+str(subf)
+            os.makedirs(os.getcwd()+"/Resultat"+folder+string)
             folder_created = True
-            folder = string+folder+"/"
         except FileExistsError:
             subf += 1
         if subf>20:
             print("Fixa dina mappar!")
-            sys.exit(-1)
-    
-    print("Skapapt mapp: ", string+folder)
+    folder = os.getcwd()+"/Resultat"+folder+string
+    print("Skapat mapp: ", folder)
     
     #load simulation data. OBS. labels need to be ordered in decreasing energy!
     data, labels = load_data(NPZ_DATAFILE, TOTAL_PORTION, 
@@ -118,7 +115,7 @@ def main():
     model.compile(optimizer=opt, loss=loss_function, metrics=['accuracy'])
     
     es = EarlyStopping(monitor='val_loss', patience=3)
-    mcp = ModelCheckpoint(filepath=folder+'checkpoint', monitor='val_loss')
+    mcp = ModelCheckpoint(filepath=folder+'/checkpoint', monitor='val_loss')
     
     training = model.fit(train_data, train_labels, 
                          epochs=NO_EPOCHS, batch_size=BATCH_SIZE,
@@ -137,20 +134,20 @@ def main():
         predictions, labels = get_permutation_match(predictions, eval_labels, CARTESIAN, loss_type=LOSS_FUNCTION)
     
     #save weights
-    model.save_weights(folder+'weights.h5')
+    model.save_weights(folder+'/weights.h5')
     
     #save summary and time
-    with open(folder+'modelsummary.txt', 'w') as f:
+    with open(folder+'/modelsummary.txt', 'w') as f:
         with redirect_stdout(f):
             end = time.time()
             hours, rem = divmod(end-start, 3600)
             minutes, seconds = divmod(rem, 60)
-            print("{:0>2}:{:0>2}:{:05.2f}".format(int(hours),int(minutes),seconds))
             print("Elapsed time: ")
+            print("{:0>2}:{:0>2}:{:05.2f}".format(int(hours),int(minutes),seconds))
             model.summary()
     
     #save history
-    with open(folder+'traininghistory', 'wb') as file_pi:
+    with open(folder+'/traininghistory', 'wb') as file_pi:
         pickle.dump(training.history, file_pi)
     
     return
