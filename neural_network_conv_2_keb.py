@@ -11,6 +11,8 @@ from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 import sys
 import os
 import pickle
+import time
+start = time.time()
 
 from models import CN_FCN
 from loss_functions import loss_function_wrapper
@@ -18,7 +20,6 @@ from utils import load_data
 from utils import get_eval_data
 from utils import get_permutation_match
 from utils import cartesian_to_spherical
-
 from contextlib import redirect_stdout
 
 
@@ -26,7 +27,7 @@ from contextlib import redirect_stdout
 
 #### C-F-C-F NETWORK ####
 
-NPZ_DATAFILE = sys.argv[1]+'.npz'                      #or import sys and use sys.argv[1]
+NPZ_DATAFILE = sys.argv[1]+'.npz'                #or import sys and use sys.argv[1]
 TOTAL_PORTION = 1                                #portion of file data to be used, (0,1]
 EVAL_PORTION = 0.1                              #portion of total data for final evalutation (0,1)
 VALIDATION_SPLIT = 0.1                          #portion of training data for epoch validation
@@ -60,11 +61,24 @@ def main():
         if i < len(sys.argv)-1:
             folder = folder + "_"
     #make folder
-    try:
-        os.makedirs(folder)
-        print("Skapapt mapp: "+folder)
-    except FileExistsError:
-        print("Invalid folder!")
+    subf=0
+    folder_created = False
+    while folder_created == False:
+        try:
+            if subf == 0:
+                string = ""
+            else:
+                string = str(subf)+"/"
+            os.makedirs(string+folder)
+            folder_created = True
+            folder = string+folder+"/"
+        except FileExistsError:
+            subf += 1
+        if subf>20:
+            print("Fixa dina mappar!")
+            sys.exit(-1)
+    
+    print("Skapapt mapp: ", string+folder)
     
     #load simulation data. OBS. labels need to be ordered in decreasing energy!
     data, labels = load_data(NPZ_DATAFILE, TOTAL_PORTION, 
@@ -101,7 +115,7 @@ def main():
     opt = Adam(lr=LEARNING_RATE)
    
     #compile the network
-    model.compile(optimizer=opt, loss=loss_function, metrics=['mse'])
+    model.compile(optimizer=opt, loss=loss_function, metrics=['accuracy'])
     
     es = EarlyStopping(monitor='val_loss', patience=3)
     mcp = ModelCheckpoint(filepath=folder+'checkpoint', monitor='val_loss')
@@ -125,9 +139,14 @@ def main():
     #save weights
     model.save_weights(folder+'weights.h5')
     
-    #save summary
+    #save summary and time
     with open(folder+'modelsummary.txt', 'w') as f:
         with redirect_stdout(f):
+            end = time.time()
+            hours, rem = divmod(end-start, 3600)
+            minutes, seconds = divmod(rem, 60)
+            print("{:0>2}:{:0>2}:{:05.2f}".format(int(hours),int(minutes),seconds))
+            print("Elapsed time: ")
             model.summary()
     
     #save history
