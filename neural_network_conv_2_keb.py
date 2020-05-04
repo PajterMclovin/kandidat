@@ -8,6 +8,7 @@
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 
+import numpy as np
 import sys
 import os
 import pickle
@@ -20,6 +21,7 @@ from utils import load_data
 from utils import get_eval_data
 from utils import get_permutation_match
 from utils import cartesian_to_spherical
+from utils import get_measurement_of_performance
 from contextlib import redirect_stdout
 
 
@@ -149,7 +151,21 @@ def main():
     #save history
     with open(folder+'/traininghistory', 'wb') as file_pi:
         pickle.dump(training.history, file_pi)
-    
+        
+    #save predicted events and measurement of performance
+    y = predictions
+    y_ = eval_labels
+    events = {'predicted_energy': y[::,0::3].flatten(),
+              'correct_energy': y_[::,0::3].flatten(), 
+              
+              'predicted_theta': y[::,1::3].flatten(),
+              'correct_theta': y_[::,1::3].flatten(),
+              
+              'predicted_phi': np.mod(y[::,2::3], 2*np.pi).flatten(),
+              'correct_phi': y_[::,2::3].flatten()}
+    np.save(folder+'/events',events)
+    mop = get_measurement_of_performance(y, y_)
+    np.save(folder+'/mop',mop)
     return
 
 if __name__ == '__main__':
