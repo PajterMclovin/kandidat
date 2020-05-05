@@ -116,7 +116,7 @@ def main():
     #compile the network
     model.compile(optimizer=opt, loss=loss_function, metrics=['accuracy'])
     
-    es = EarlyStopping(monitor='val_loss', patience=3)
+    es = EarlyStopping(monitor='val_loss', patience=5)
     mcp = ModelCheckpoint(filepath=folder+'/checkpoint', monitor='val_loss')
     
     training = model.fit(train_data, train_labels, 
@@ -124,7 +124,9 @@ def main():
                          validation_split=VALIDATION_SPLIT,
                          callbacks=[es, mcp])
 
-    
+    epochs = es.stopped_epoch
+    if epochs == 0:
+        epocs = NO_EPOCHS
     #plot predictions on evaluation data
     predictions = model.predict(eval_data)
 
@@ -146,6 +148,7 @@ def main():
             print("Elapsed time: ")
             minutes, seconds = divmod(rem, 60)
             print("{:0>2}:{:0>2}:{:05.2f}".format(int(hours),int(minutes),seconds))
+            print("Elapsed epochs: ", epochs)
             model.summary()
     
     #save history
