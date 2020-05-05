@@ -19,7 +19,7 @@ def truncate_colormap(cmap, minval=0.0, maxval=1.0, n=100):
         cmap(np.linspace(minval, maxval, n)))
     return new_cmap
 
-def plot_predictions(y, y_, bins=500, show_detector_angles=False):
+def plot_predictions_evt(events, bins=500, show_detector_angles=False, title = ""):
     """
     Use to plot a models predictions in similar format as previous years, i.e. 2d histograms ("lasersvärd")
     
@@ -37,21 +37,9 @@ def plot_predictions(y, y_, bins=500, show_detector_angles=False):
     Raises : if data and labels is not the same length
         ValueError : if prediction and labels is not of same length
     """
-    if not len(y)==len(y_):
-        raise TypeError('The prediction must be of same length as labels.') 
-                      
-    events = {'predicted_energy': y[::,0::3].flatten(),
-              'correct_energy': y_[::,0::3].flatten(), 
-              
-              'predicted_theta': y[::,1::3].flatten(),
-              'correct_theta': y_[::,1::3].flatten(),
-              
-              'predicted_phi': np.mod(y[::,2::3], 2*np.pi).flatten(),
-              'correct_phi': y_[::,2::3].flatten()}
-    
-    
+       
     fig, axs = plt.subplots(1,3, figsize=(20, 8))
-    colormap = truncate_colormap(plt.cm.afmhot, 0.0, 1.0)
+    colormap = truncate_colormap(plt.cm.copper, 0.0, 1.0)
     img = []
     img.append(axs[0].hist2d(events['correct_energy'], events['predicted_energy'],cmap=colormap, bins=bins, norm=LogNorm()))
     img.append(axs[1].hist2d(events['correct_theta'], events['predicted_theta'], cmap=colormap, bins=bins, norm=LogNorm()))
@@ -61,6 +49,11 @@ def plot_predictions(y, y_, bins=500, show_detector_angles=False):
     max_theta = np.pi
     max_phi = 2*np.pi
     line_color = 'blue'
+    ml = -0.15
+    min_e = 0
+    min_t = 0
+    min_p = 0
+    
     
     line = np.linspace(0,max_energy)
     for i in range(0,3):
@@ -80,14 +73,14 @@ def plot_predictions(y, y_, bins=500, show_detector_angles=False):
     axs[2].set_ylabel('Reconstructed E \u03A6', fontsize = text_size)
     
     
-    axs[0].set_xlim([0, max_energy])
-    axs[0].set_ylim([0, max_energy])
+    axs[0].set_xlim([-2, max_energy])
+    axs[0].set_ylim([-2, max_energy])
     axs[0].set_aspect('equal', 'box')
-    axs[1].set_xlim([0, max_theta])
-    axs[1].set_ylim([0, max_theta])
+    axs[1].set_xlim([min_t, max_theta])
+    axs[1].set_ylim([min_t, max_theta])
     axs[1].set_aspect('equal', 'box')
-    axs[2].set_xlim([0, max_phi])
-    axs[2].set_ylim([0, max_phi])
+    axs[2].set_xlim([min_p, max_phi])
+    axs[2].set_ylim([min_p, max_phi])
     axs[2].set_aspect('equal', 'box')
 
     cb1 = fig.colorbar(img[0][3], ax = axs[0], fraction=0.046, pad = 0.04)
@@ -104,11 +97,13 @@ def plot_predictions(y, y_, bins=500, show_detector_angles=False):
     axs[1].tick_params(axis='both', which='major', labelsize=text_size)
     axs[2].tick_params(axis='both', which='major', labelsize=text_size)
     
+    #plt.title(title) 
     plt.sca(axs[0])
     plt.xticks(np.linspace(0, 10, 6),['0','2','4','6','8','10'])
     plt.yticks(np.linspace(0, 10, 6),['0','2','4','6','8','10'])
     
     plt.sca(axs[1])
+    plt.title(title) 
     plt.xticks(np.linspace(0, np.pi, 3),['0','$\pi/2$','$\pi$'])
     plt.yticks(np.linspace(0, np.pi, 3),['0','$\pi/2$','$\pi$'])
     
@@ -116,8 +111,26 @@ def plot_predictions(y, y_, bins=500, show_detector_angles=False):
     plt.xticks(np.linspace(0, 2*np.pi, 3),['0','$\pi$','$2\pi$'])
     plt.yticks(np.linspace(0, 2*np.pi, 3),['0','$\pi$','$2\pi$'])
     
+    
+    
     fig.tight_layout()
     return fig, events
+
+def plot_predictions(y, y_, bins=500, show_detector_angles=False):
+
+    if not len(y)==len(y_):
+        raise TypeError('The prediction must be of same length as labels.') 
+                      
+    events = {'predicted_energy': y[::,0::3].flatten(),
+              'correct_energy': y_[::,0::3].flatten(), 
+              
+              'predicted_theta': y[::,1::3].flatten(),
+              'correct_theta': y_[::,1::3].flatten(),
+              
+              'predicted_phi': np.mod(y[::,2::3], 2*np.pi).flatten(),
+              'correct_phi': y_[::,2::3].flatten()}
+    
+    return plot_predictions_evt(events, bins, show_detector_angles)
 
 
 def plot_loss(history):
