@@ -18,8 +18,8 @@ def load(foldername):
     h = 0
     with open('Resultat/'+foldername+'/traininghistory', 'rb') as f:
         h = pickle.load(f)
-    mop = np.load('Resultat/'+foldername+'/mop.npy', allow_pickle=True)
-    evts = np.load('Resultat/'+foldername+'/events.npy', allow_pickle=True)
+    mop = np.load('Resultat/'+foldername+'/mop.npy', allow_pickle=True).tolist()
+    evts = np.load('Resultat/'+foldername+'/events.npy', allow_pickle=True).tolist()
     return h, mop, evts
 
 def plot_hist(h, title):
@@ -32,10 +32,10 @@ def plot_hist(h, title):
     plt.legend(['train', 'val'], loc='upper right')
     plt.grid()
     
-    plt.figure().gca().xaxis.set_major_locator(MaxNLocator(integer=True))
+    plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
 
-titles = ["m2_1300k_200_F_32_16_7"]
+titles = ["m5_1700k_200_F_64_32_10"]
 for title in titles: 
     h, mop, evts = load(title)
-    #plot_hist(h, title)
-    plot_predictions_evt(evts, show_detector_angles=True)
+    plot_hist(h, title)
+    plot_predictions_evt(evts, show_detector_angles=True, title=title)
