@@ -34,8 +34,37 @@ def plot_hist(h, title):
     
     plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
 
-titles = ["m5_1700k_200_F_64_32_10"]
-for title in titles: 
-    h, mop, evts = load(title)
-    plot_hist(h, title)
-    plot_predictions_evt(evts, show_detector_angles=True, title=title)
+def count_rec(evts, eps = 0.01):
+    # räknar efter kvadrant..:
+    # c1: finns, rek. till att finnas
+    # c2: finns inte, rek. till att finnas
+    # c3: finns inte, rek. till att inte finnas
+    # c4: finns, rek. till att inte finnas
+    # ger svaret i procent
+    ce = evts['correct_energy']
+    pe = evts['predicted_energy']
+    tot_evts = len(ce)
+
+    c1, c2, c3, c4 = 0, 0, 0, 0
+    
+    for i in range(len(ce)):
+        if ce[i]>eps:
+            if pe[i]>eps:
+                c1 += 1
+            else:
+                c4 += 1
+        if ce[i]<eps:
+            if pe[i]>eps:
+                c2 += 1
+            else:
+                c3 += 1
+    proc = np.divide([c1, c2, c3, c4], tot_evts)*100
+    return proc
+
+def plot():
+    titles = ["m5_1700k_200_F_64_32_10"]
+    for title in titles: 
+        h, mop, evts = load(title)
+        plot_hist(h, title)
+        plot_predictions_evt(evts, show_detector_angles=True, title=title)
+    return
